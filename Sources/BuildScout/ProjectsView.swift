@@ -157,6 +157,19 @@ private struct ProjectDetail: View {
                                     .foregroundStyle(.secondary)
                                 Text(task.estimatedCost.formatted(.currency(code: "CAD").precision(.fractionLength(0))))
 
+                                if let sourceURL = task.sourceURL,
+                                   let url = URL(string: sourceURL),
+                                   !sourceURL.isEmpty {
+                                    Link(destination: url) {
+                                        Label(
+                                            task.sourceProvider ?? "Source",
+                                            systemImage: "arrow.up.right.square"
+                                        )
+                                        .font(.caption2.bold())
+                                    }
+                                    .help(task.sourceTitle ?? sourceURL)
+                                }
+
                                 Spacer()
 
                                 Text("Actual")

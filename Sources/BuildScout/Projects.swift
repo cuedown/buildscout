@@ -17,6 +17,9 @@ struct ProjectTask: Identifiable, Codable, Hashable {
     var actualCost: Double?
     var required: Bool
     var status: ProjectTaskStatus = .planned
+    var sourceURL: String? = nil
+    var sourceTitle: String? = nil
+    var sourceProvider: String? = nil
 }
 
 struct BuildProject: Identifiable, Codable, Hashable {
@@ -60,7 +63,31 @@ struct BuildProject: Identifiable, Codable, Hashable {
                     category: $0.category,
                     estimatedCost: $0.estimate,
                     actualCost: nil,
-                    required: $0.required
+                    required: $0.required,
+                    status: $0.required ? .planned : .skipped
+                )
+            }
+        )
+    }
+
+    static func from(sourcedPlan: SourcedBuildPlan, targetBudget: Double) -> BuildProject {
+        BuildProject(
+            name: "\(sourcedPlan.listing.year) \(sourcedPlan.listing.make) \(sourcedPlan.listing.model) • Sourced \(sourcedPlan.evaluation.mission.rawValue)",
+            vehicle: sourcedPlan.listing,
+            mission: sourcedPlan.evaluation.mission,
+            targetBudget: targetBudget,
+            tasks: sourcedPlan.lines.map { line in
+                let cheapest = line.cheapest
+                return ProjectTask(
+                    title: line.task.label,
+                    category: line.task.category,
+                    estimatedCost: line.planningCost,
+                    actualCost: nil,
+                    required: line.task.required,
+                    status: line.task.required ? .planned : .skipped,
+                    sourceURL: cheapest?.url,
+                    sourceTitle: cheapest?.title,
+                    sourceProvider: cheapest?.provider
                 )
             }
         )

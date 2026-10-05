@@ -29,12 +29,18 @@ enum ProjectExporter {
         lines.append("")
         lines.append("## Build ledger")
         lines.append("")
-        lines.append("| Item | Category | Required | Status | Estimate | Actual |")
-        lines.append("| --- | --- | --- | --- | ---: | ---: |")
+        lines.append("| Item | Category | Required | Status | Estimate | Actual | Source |")
+        lines.append("| --- | --- | --- | --- | ---: | ---: | --- |")
 
         for task in project.tasks {
             let actual = task.actualCost.map(money) ?? ""
-            lines.append("| \(escape(task.title)) | \(escape(task.category)) | \(task.required ? "Yes" : "No") | \(task.status.rawValue) | \(money(task.estimatedCost)) | \(actual) |")
+            let source: String
+            if let url = task.sourceURL, !url.isEmpty {
+                source = "[\(escape(task.sourceProvider ?? task.sourceTitle ?? "Open"))](\(url))"
+            } else {
+                source = ""
+            }
+            lines.append("| \(escape(task.title)) | \(escape(task.category)) | \(task.required ? "Yes" : "No") | \(task.status.rawValue) | \(money(task.estimatedCost)) | \(actual) | \(source) |")
         }
 
         if !project.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {

@@ -99,6 +99,13 @@ final class ListingStore: ObservableObject {
         )
     }
 
+    func startProject(from sourcedPlan: SourcedBuildPlan) {
+        projects.insert(
+            BuildProject.from(sourcedPlan: sourcedPlan, targetBudget: mission.totalBudget),
+            at: 0
+        )
+    }
+
     func removeProject(_ id: UUID) {
         projects.removeAll { $0.id == id }
     }

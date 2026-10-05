@@ -58,6 +58,8 @@ struct VehicleListing: Identifiable, Codable, Hashable {
     var url: String?
     var riskTags: [String] = []
     var strengths: [String] = []
+    var vin: String? = nil
+    var odometerKM: Double? = nil
 }
 
 struct MissionProfile: Codable, Equatable {

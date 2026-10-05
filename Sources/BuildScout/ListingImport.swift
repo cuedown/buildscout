@@ -17,6 +17,8 @@ struct ListingDraft {
     var url: String?
     var riskTags: [String] = []
     var strengths: [String] = []
+    var vin: String?
+    var odometerKM: Double?
 
     func makeListing() -> VehicleListing {
         VehicleListing(
@@ -35,7 +37,9 @@ struct ListingDraft {
             notes: notes,
             url: url,
             riskTags: riskTags,
-            strengths: strengths
+            strengths: strengths,
+            vin: vin,
+            odometerKM: odometerKM
         )
     }
 }
@@ -70,6 +74,21 @@ enum ListingImportParser {
 
         if let priceText = firstMatch(in: text, pattern: #"(?:CA\$|CAD\s*\$?|\$)\s*([0-9]{2,6}(?:,[0-9]{3})*(?:\.\d{1,2})?)"#, capture: 1) {
             draft.price = Double(priceText.replacingOccurrences(of: ",", with: "")) ?? 0
+        }
+
+        if let vin = firstMatch(
+            in: text.uppercased(),
+            pattern: #"\b[A-HJ-NPR-Z0-9]{17}\b"#
+        ) {
+            draft.vin = vin
+        }
+
+        if let kmText = firstMatch(
+            in: text,
+            pattern: #"\b([0-9]{1,3}(?:,[0-9]{3})+|[0-9]{4,6})\s*(?:km|kilomet(?:er|re)s?)\b"#,
+            capture: 1
+        ) {
+            draft.odometerKM = Double(kmText.replacingOccurrences(of: ",", with: ""))
         }
 
         let lower = text.lowercased()

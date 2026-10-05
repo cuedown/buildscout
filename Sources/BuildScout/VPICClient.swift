@@ -68,7 +68,8 @@ struct VINDecodeResult: Codable, Sendable, Identifiable {
                 FuelTypePrimary.isEmpty ? nil : FuelTypePrimary,
                 PlantCountry.isEmpty ? nil : "Built in \(PlantCountry)"
             ].compactMap { $0 }.joined(separator: " • "),
-            url: nil
+            url: nil,
+            vin: VIN
         )
     }
 

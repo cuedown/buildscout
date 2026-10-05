@@ -3,8 +3,14 @@ import AppKit
 
 struct HunterView: View {
     @EnvironmentObject private var store: ListingStore
+    @EnvironmentObject private var connections: ConnectionStore
+
     @State private var sourceFilter = ""
     @State private var copiedQuery: String?
+    @State private var liveResults: [HuntResult] = []
+    @State private var isHunting = false
+    @State private var huntError: String?
+    @State private var resultFilter: HuntResultKind?
 
     private var sources: [HunterSource] {
         guard !sourceFilter.isEmpty else { return HunterDirectory.sources }
@@ -15,10 +21,21 @@ struct HunterView: View {
         }
     }
 
+    private var visibleResults: [HuntResult] {
+        guard let resultFilter else { return liveResults }
+        return liveResults.filter { $0.kind == resultFilter }
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 header
+                liveHuntPanel
+
+                if !liveResults.isEmpty {
+                    liveResultsPanel
+                }
+
                 searchKit
                 sourceHeader
                 sourceGrid
@@ -37,7 +54,7 @@ struct HunterView: View {
                 Text("FIND THE UGLY DEALS.")
                     .font(.system(size: 34, weight: .black, design: .rounded))
                     .tracking(-0.7)
-                Text("Search for situations, failures, estates, and half-finished projects before enthusiast tax arrives.")
+                Text("One hunt can fan out across web results, auction domains, shopping results, eBay, and the source directory.")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(BuildScoutTheme.muted)
             }
@@ -47,9 +64,100 @@ struct HunterView: View {
                     .font(.system(size: 12, weight: .black, design: .rounded))
                     .tracking(1)
                     .foregroundStyle(BuildScoutTheme.accent)
-                Text("≤ (money(store.mission.vehicleBudget)) vehicle")
+                Text("≤ \(money(store.mission.vehicleBudget)) vehicle")
                     .font(.caption)
                     .foregroundStyle(BuildScoutTheme.muted)
+            }
+        }
+    }
+
+    private var liveHuntPanel: some View {
+        ScoutPanel {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        ScoutEyebrow(text: "Live multi-source hunt")
+                        Text("Search the market as a build problem, not a model-name lookup.")
+                            .font(.system(size: 14, weight: .bold))
+                        Text(liveProviderSummary)
+                            .font(.caption)
+                            .foregroundStyle(BuildScoutTheme.muted)
+                    }
+
+                    Spacer()
+
+                    Button {
+                        runHunt()
+                    } label: {
+                        HStack(spacing: 8) {
+                            if isHunting {
+                                ProgressView().controlSize(.small)
+                            } else {
+                                Image(systemName: "dot.radiowaves.left.and.right")
+                            }
+                            Text(isHunting ? "HUNTING…" : "RUN LIVE HUNT")
+                        }
+                        .font(.system(size: 10, weight: .black, design: .rounded))
+                        .tracking(0.6)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(isHunting || (!connections.hasSerpAPI && !connections.hasEBay))
+                }
+
+                HStack(spacing: 10) {
+                    providerPill("SERPAPI", on: connections.hasSerpAPI)
+                    providerPill("EBAY API", on: connections.hasEBay)
+                    providerPill("AUCTION DOMAINS", on: connections.hasSerpAPI)
+                    providerPill("SHOPPING", on: connections.hasSerpAPI)
+
+                    Spacer()
+
+                    Text(connections.preferredRegion)
+                        .font(.caption)
+                        .foregroundStyle(BuildScoutTheme.faint)
+                }
+
+                if !connections.hasSerpAPI && !connections.hasEBay {
+                    Label(
+                        "Add SerpApi or eBay credentials under Connections to enable live hunting. Keyless vehicle/safety APIs still work in Vehicle Intel.",
+                        systemImage: "key.fill"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(BuildScoutTheme.warning)
+                }
+
+                if let huntError {
+                    Label(huntError, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(BuildScoutTheme.warning)
+                }
+            }
+        }
+    }
+
+    private var liveResultsPanel: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    ScoutEyebrow(text: "Live results")
+                    Text("\(liveResults.count) LEADS")
+                        .font(.system(size: 20, weight: .black, design: .rounded))
+                }
+
+                Spacer()
+
+                HStack(spacing: 6) {
+                    resultFilterButton("ALL", kind: nil)
+                    resultFilterButton("VEHICLES", kind: .vehicle)
+                    resultFilterButton("AUCTIONS", kind: .auction)
+                    resultFilterButton("PARTS", kind: .part)
+                }
+            }
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 360), spacing: 12)], spacing: 12) {
+                ForEach(visibleResults) { result in
+                    liveResultCard(result)
+                }
             }
         }
     }
@@ -100,7 +208,7 @@ struct HunterView: View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 ScoutEyebrow(text: "Source directory")
-                Text("WHERE TO LOOK")
+                Text("PROVIDERS WITHOUT A DIRECT FEED")
                     .font(.system(size: 20, weight: .black, design: .rounded))
             }
             Spacer()
@@ -180,16 +288,152 @@ struct HunterView: View {
                         .foregroundStyle(BuildScoutTheme.accent)
                 }
                 VStack(alignment: .leading, spacing: 5) {
-                    ScoutEyebrow(text: "Current ingestion loop")
-                    Text("Open source → copy listing → Import → score → start build")
+                    ScoutEyebrow(text: "A → B loop")
+                    Text("Hunt → inspect → candidate → parts → build path → project ledger")
                         .font(.system(size: 13, weight: .bold))
-                    Text("Approved feeds and APIs can automate this later without baking private credentials or brittle scraping into the app.")
+                    Text("Live leads can be promoted into Candidates immediately. Candidate selection then feeds parts searches and build planning.")
                         .font(.caption)
                         .foregroundStyle(BuildScoutTheme.muted)
                 }
                 Spacer()
             }
         }
+    }
+
+    private var liveProviderSummary: String {
+        var active: [String] = []
+        if connections.hasSerpAPI { active.append("Google web / Shopping / eBay via SerpApi") }
+        if connections.hasEBay { active.append("native eBay Browse") }
+        return active.isEmpty ? "No keyed live-search provider connected yet." : active.joined(separator: " + ")
+    }
+
+    private func runHunt() {
+        isHunting = true
+        huntError = nil
+
+        let request = HuntRequest(
+            mission: store.mission.type,
+            keywords: HuntEngine.queries(for: store.mission.type, budget: store.mission.vehicleBudget),
+            location: connections.preferredRegion,
+            maxVehiclePrice: store.mission.vehicleBudget,
+            preferredVehicle: store.selectedEvaluation?.listing ?? store.evaluations.first?.listing
+        )
+
+        Task {
+            let results = await HuntEngine.run(request: request, connections: connections)
+            await MainActor.run {
+                liveResults = results
+                isHunting = false
+                if results.isEmpty {
+                    huntError = "The connected providers returned no results for this hunt."
+                }
+            }
+        }
+    }
+
+    private func providerPill(_ title: String, on: Bool) -> some View {
+        HStack(spacing: 5) {
+            Circle()
+                .fill(on ? BuildScoutTheme.success : BuildScoutTheme.faint)
+                .frame(width: 6, height: 6)
+            Text(title)
+                .font(.system(size: 9, weight: .black, design: .rounded))
+                .tracking(0.5)
+        }
+        .foregroundStyle(on ? .white : BuildScoutTheme.faint)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(Color.white.opacity(0.05), in: Capsule())
+    }
+
+    private func resultFilterButton(_ title: String, kind: HuntResultKind?) -> some View {
+        let selected = resultFilter == kind
+        return Button {
+            resultFilter = kind
+        } label: {
+            Text(title)
+                .font(.system(size: 9, weight: .black, design: .rounded))
+                .tracking(0.5)
+                .foregroundStyle(selected ? .black : BuildScoutTheme.muted)
+                .padding(.horizontal, 9)
+                .padding(.vertical, 6)
+                .background(selected ? BuildScoutTheme.accent : BuildScoutTheme.surface, in: Capsule())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func liveResultCard(_ result: HuntResult) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(result.provider.uppercased())
+                        .font(.system(size: 8, weight: .black, design: .rounded))
+                        .tracking(0.8)
+                        .foregroundStyle(BuildScoutTheme.accent)
+
+                    Text(result.title)
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .lineLimit(2)
+                }
+
+                Spacer()
+
+                Text(result.kind.rawValue.uppercased())
+                    .font(.system(size: 8, weight: .black, design: .rounded))
+                    .foregroundStyle(BuildScoutTheme.faint)
+            }
+
+            if let price = result.price {
+                Text(price.formatted(.currency(code: result.currency ?? "CAD").precision(.fractionLength(0))))
+                    .font(.system(size: 18, weight: .black, design: .rounded))
+                    .foregroundStyle(BuildScoutTheme.success)
+            }
+
+            if !result.snippet.isEmpty {
+                Text(result.snippet)
+                    .font(.caption)
+                    .foregroundStyle(BuildScoutTheme.muted)
+                    .lineLimit(3)
+            }
+
+            HStack {
+                if let location = result.location, !location.isEmpty {
+                    Label(location, systemImage: "mappin.and.ellipse")
+                        .font(.caption2)
+                        .foregroundStyle(BuildScoutTheme.faint)
+                }
+
+                Spacer()
+
+                if result.kind == .vehicle || result.kind == .auction {
+                    Button {
+                        promote(result)
+                    } label: {
+                        Label("CANDIDATE", systemImage: "plus.circle")
+                            .font(.system(size: 9, weight: .black, design: .rounded))
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                if let url = URL(string: result.url), !result.url.isEmpty {
+                    Link(destination: url) {
+                        Image(systemName: "arrow.up.right.square")
+                    }
+                }
+            }
+        }
+        .padding(15)
+        .background(BuildScoutTheme.surface, in: RoundedRectangle(cornerRadius: 13))
+        .overlay(RoundedRectangle(cornerRadius: 13).stroke(BuildScoutTheme.border))
+    }
+
+    private func promote(_ result: HuntResult) {
+        store.addListing(
+            HuntNormalization.vehicleListing(
+                from: result,
+                defaultLocation: connections.preferredRegion
+            )
+        )
     }
 
     private func money(_ value: Double) -> String {

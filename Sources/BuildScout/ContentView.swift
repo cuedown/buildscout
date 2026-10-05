@@ -129,13 +129,17 @@ struct ContentView: View {
     private var detailView: some View {
         switch section {
         case .mission: MissionView()
+        case .autopilot: AutopilotView()
         case .hunter: HunterView()
         case .vehicleIntel: VehicleIntelView()
         case .candidates: CandidateBrowser()
+        case .buildLab: BuildLabView()
+        case .research: ResearchView()
         case .projects: ProjectsView()
         case .importListings: ImportView()
         case .sources: SourcesView()
         case .garage: GarageView()
+        case .connections: ConnectionsView()
         case .support: SupportView()
         }
     }
@@ -143,13 +147,17 @@ struct ContentView: View {
 
 enum SidebarSection: String, CaseIterable, Identifiable {
     case mission = "Mission"
+    case autopilot = "Autopilot"
     case hunter = "Hunter"
     case vehicleIntel = "Vehicle Intel"
     case candidates = "Candidates"
+    case buildLab = "Build Lab"
+    case research = "Research"
     case projects = "Projects"
     case importListings = "Import"
     case sources = "Sources"
     case garage = "Garage"
+    case connections = "Connections"
     case support = "Support"
 
     var id: String { rawValue }
@@ -157,13 +165,17 @@ enum SidebarSection: String, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .mission: return "scope"
+        case .autopilot: return "bolt.horizontal.circle.fill"
         case .hunter: return "binoculars.fill"
         case .vehicleIntel: return "barcode.viewfinder"
         case .candidates: return "car.side.fill"
+        case .buildLab: return "flask.fill"
+        case .research: return "books.vertical.fill"
         case .projects: return "wrench.and.screwdriver.fill"
         case .importListings: return "square.and.arrow.down.fill"
         case .sources: return "antenna.radiowaves.left.and.right"
         case .garage: return "garage.open.trianglebadge.exclamationmark"
+        case .connections: return "point.3.connected.trianglepath.dotted"
         case .support: return "heart.fill"
         }
     }
