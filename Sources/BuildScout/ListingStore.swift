@@ -15,6 +15,9 @@ final class ListingStore: ObservableObject {
     @Published var garage: GarageProfile {
         didSet { persist() }
     }
+    @Published var projects: [BuildProject] {
+        didSet { persist() }
+    }
 
     @Published var selectedListingID: UUID?
     @Published var query = ""
@@ -26,11 +29,13 @@ final class ListingStore: ObservableObject {
             listings = state.listings
             favoriteIDs = state.favoriteIDs
             garage = state.garage ?? .starter
+            projects = state.projects ?? []
         } else {
             mission = MissionProfile()
             listings = SeedData.listings
             favoriteIDs = []
             garage = .starter
+            projects = []
         }
     }
 
@@ -84,11 +89,26 @@ final class ListingStore: ObservableObject {
         }
     }
 
+    func startProject(from evaluation: BuildEvaluation) {
+        if projects.contains(where: { $0.vehicle.id == evaluation.listing.id && $0.mission == evaluation.mission }) {
+            return
+        }
+        projects.insert(
+            BuildProject.from(evaluation: evaluation, targetBudget: mission.totalBudget),
+            at: 0
+        )
+    }
+
+    func removeProject(_ id: UUID) {
+        projects.removeAll { $0.id == id }
+    }
+
     func resetDemoData() {
         mission = MissionProfile()
         listings = SeedData.listings
         favoriteIDs = []
         garage = .starter
+        projects = []
         selectedListingID = nil
         query = ""
     }
@@ -99,7 +119,8 @@ final class ListingStore: ObservableObject {
                 mission: mission,
                 listings: listings,
                 favoriteIDs: favoriteIDs,
-                garage: garage
+                garage: garage,
+                projects: projects
             )
         )
     }

@@ -25,6 +25,7 @@ struct ContentView: View {
             case .mission: MissionView()
             case .hunter: HunterView()
             case .candidates: CandidateBrowser()
+            case .projects: ProjectsView()
             case .importListings: ImportView()
             case .sources: SourcesView()
             case .garage: GarageView()
@@ -38,6 +39,7 @@ enum SidebarSection: String, CaseIterable, Identifiable {
     case mission = "Mission"
     case hunter = "Hunter"
     case candidates = "Candidates"
+    case projects = "Projects"
     case importListings = "Import"
     case sources = "Sources"
     case garage = "Garage"
@@ -50,6 +52,7 @@ enum SidebarSection: String, CaseIterable, Identifiable {
         case .mission: return "scope"
         case .hunter: return "binoculars"
         case .candidates: return "car.2"
+        case .projects: return "wrench.and.screwdriver"
         case .importListings: return "square.and.arrow.down"
         case .sources: return "antenna.radiowaves.left.and.right"
         case .garage: return "wrench.adjustable"

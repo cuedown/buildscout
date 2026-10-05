@@ -20,6 +20,9 @@ A cheap shell is not automatically a cheap build. BuildScout tries to expose tha
 - Platform intelligence for common project-car families
 - Risk and known-failure warnings
 - Favorite candidates
+- Persistent project builds with task status and actual-vs-estimated spend
+- Garage skill/tool profile that changes build estimates
+- Hunter workspace with project-car search phrases and source directory
 - Local persistence between launches
 - Paste-a-listing parser
 - JSON and CSV bulk import
@@ -105,6 +108,15 @@ Build:
 ```bash
 swift build
 ```
+
+Package a clickable macOS app bundle:
+
+```bash
+chmod +x scripts/package_app.sh
+scripts/package_app.sh 0.1.0
+```
+
+The packaged app and zip are written to `dist/`. Tagged releases can be packaged automatically by GitHub Actions.
 
 ## Roadmap
 

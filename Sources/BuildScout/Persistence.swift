@@ -5,6 +5,7 @@ struct PersistedState: Codable {
     var listings: [VehicleListing]
     var favoriteIDs: Set<UUID>
     var garage: GarageProfile?
+    var projects: [BuildProject]?
 }
 
 enum PersistenceStore {

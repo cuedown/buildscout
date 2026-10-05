@@ -91,13 +91,22 @@ private struct BuildDetail: View {
                     VStack(alignment: .trailing, spacing: 8) {
                         Text("\(evaluation.score)/100")
                             .font(.title2.bold())
-                        Button {
-                            store.toggleFavorite(evaluation.listing)
-                        } label: {
-                            Label(
-                                store.favoriteIDs.contains(evaluation.listing.id) ? "Saved" : "Save",
-                                systemImage: store.favoriteIDs.contains(evaluation.listing.id) ? "star.fill" : "star"
-                            )
+                        HStack {
+                            Button {
+                                store.toggleFavorite(evaluation.listing)
+                            } label: {
+                                Label(
+                                    store.favoriteIDs.contains(evaluation.listing.id) ? "Saved" : "Save",
+                                    systemImage: store.favoriteIDs.contains(evaluation.listing.id) ? "star.fill" : "star"
+                                )
+                            }
+
+                            Button {
+                                store.startProject(from: evaluation)
+                            } label: {
+                                Label("Start build", systemImage: "wrench.and.screwdriver")
+                            }
+                            .buttonStyle(.borderedProminent)
                         }
                     }
                 }
