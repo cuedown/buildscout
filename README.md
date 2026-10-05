@@ -23,6 +23,7 @@ A cheap shell is not automatically a cheap build. BuildScout tries to expose tha
 - Persistent project builds with task status and actual-vs-estimated spend
 - Garage skill/tool profile that changes build estimates
 - Hunter workspace with project-car search phrases and source directory
+- Live NHTSA vPIC VIN decoding with one-click candidate creation
 - Local persistence between launches
 - Paste-a-listing parser
 - JSON and CSV bulk import
