@@ -1,0 +1,30 @@
+name: Vehicle platform profile
+description: Propose a chassis/platform for BuildScout's compatibility database.
+title: "[Vehicle] "
+labels: ["vehicle-data"]
+body:
+  - type: input
+    id: platform
+    attributes:
+      label: Platform
+      placeholder: "BMW E46 330i"
+    validations:
+      required: true
+  - type: textarea
+    id: missions
+    attributes:
+      label: Good missions
+      description: Drift, overland, rally, camper, track, winter, etc.
+    validations:
+      required: true
+  - type: textarea
+    id: facts
+    attributes:
+      label: Compatibility facts and sources
+      description: Include links or references for fitment and mechanical claims.
+    validations:
+      required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Known risks / failure points

@@ -1,0 +1,31 @@
+name: Source adapter
+description: Propose a compliant listing, auction, or parts source.
+title: "[Source] "
+labels: ["source-adapter"]
+body:
+  - type: input
+    id: provider
+    attributes:
+      label: Provider
+    validations:
+      required: true
+  - type: dropdown
+    id: method
+    attributes:
+      label: Integration method
+      options:
+        - Public API
+        - Approved partner API
+        - RSS / public feed
+        - User export/import
+        - Community dataset
+        - Other permitted method
+    validations:
+      required: true
+  - type: textarea
+    id: docs
+    attributes:
+      label: Documentation / terms
+      description: Link the integration documentation and relevant usage terms.
+    validations:
+      required: true

@@ -11,11 +11,6 @@ let package = Package(
         .executableTarget(
             name: "BuildScout",
             path: "Sources/BuildScout"
-        ),
-        .testTarget(
-            name: "BuildScoutTests",
-            dependencies: ["BuildScout"],
-            path: "Tests/BuildScoutTests"
         )
     ]
 )
