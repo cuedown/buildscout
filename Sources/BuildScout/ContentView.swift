@@ -23,6 +23,7 @@ struct ContentView: View {
         } detail: {
             switch section {
             case .mission: MissionView()
+            case .hunter: HunterView()
             case .candidates: CandidateBrowser()
             case .importListings: ImportView()
             case .sources: SourcesView()
@@ -35,6 +36,7 @@ struct ContentView: View {
 
 enum SidebarSection: String, CaseIterable, Identifiable {
     case mission = "Mission"
+    case hunter = "Hunter"
     case candidates = "Candidates"
     case importListings = "Import"
     case sources = "Sources"
@@ -46,6 +48,7 @@ enum SidebarSection: String, CaseIterable, Identifiable {
     var symbol: String {
         switch self {
         case .mission: return "scope"
+        case .hunter: return "binoculars"
         case .candidates: return "car.2"
         case .importListings: return "square.and.arrow.down"
         case .sources: return "antenna.radiowaves.left.and.right"

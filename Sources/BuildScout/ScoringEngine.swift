@@ -1,7 +1,7 @@
 import Foundation
 
 enum ScoringEngine {
-    static func evaluate(_ listing: VehicleListing, mission: MissionProfile) -> BuildEvaluation {
+    static func evaluate(_ listing: VehicleListing, mission: MissionProfile, garage: GarageProfile = .starter) -> BuildEvaluation {
         var score = 50
         var reasons: [String] = []
         var warnings: [String] = []
@@ -143,6 +143,26 @@ enum ScoringEngine {
 
         case .custom:
             reasons.append("Custom mode uses budget, condition and compatibility scoring only.")
+        }
+
+        let garageFit = GarageFit.assess(
+            listing: listing,
+            mission: mission,
+            garage: garage,
+            parts: parts
+        )
+        score += garageFit.score
+        reasons.append(contentsOf: garageFit.reasons)
+        warnings.append(contentsOf: garageFit.warnings)
+
+        if garageFit.addedCost > 0 {
+            parts.append(.init(
+                name: "Tool / outside-help contingency",
+                estimate: garageFit.addedCost,
+                required: true,
+                category: "Garage"
+            ))
+            projected += garageFit.addedCost
         }
 
         let uniqueRisks = Array(Set(listing.riskTags + warnings)).sorted()

@@ -12,6 +12,10 @@ final class ListingStore: ObservableObject {
     @Published var favoriteIDs: Set<UUID> {
         didSet { persist() }
     }
+    @Published var garage: GarageProfile {
+        didSet { persist() }
+    }
+
     @Published var selectedListingID: UUID?
     @Published var query = ""
     @Published var favoritesOnly = false
@@ -21,10 +25,12 @@ final class ListingStore: ObservableObject {
             mission = state.mission
             listings = state.listings
             favoriteIDs = state.favoriteIDs
+            garage = state.garage ?? .starter
         } else {
             mission = MissionProfile()
             listings = SeedData.listings
             favoriteIDs = []
+            garage = .starter
         }
     }
 
@@ -39,7 +45,7 @@ final class ListingStore: ObservableObject {
                 let matchesFavorite = !favoritesOnly || favoriteIDs.contains(listing.id)
                 return matchesQuery && matchesFavorite
             }
-            .map { ScoringEngine.evaluate($0, mission: mission) }
+            .map { ScoringEngine.evaluate($0, mission: mission, garage: garage) }
             .sorted {
                 if $0.score == $1.score { return $0.projectedTotal < $1.projectedTotal }
                 return $0.score > $1.score
@@ -82,6 +88,7 @@ final class ListingStore: ObservableObject {
         mission = MissionProfile()
         listings = SeedData.listings
         favoriteIDs = []
+        garage = .starter
         selectedListingID = nil
         query = ""
     }
@@ -91,7 +98,8 @@ final class ListingStore: ObservableObject {
             PersistedState(
                 mission: mission,
                 listings: listings,
-                favoriteIDs: favoriteIDs
+                favoriteIDs: favoriteIDs,
+                garage: garage
             )
         )
     }
