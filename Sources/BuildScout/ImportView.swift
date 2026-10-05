@@ -11,40 +11,9 @@ struct ImportView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 22) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Bring your own listing").font(.largeTitle.bold())
-                    Text("Paste the ad exactly as you found it. BuildScout will pull out the useful bits, then you can correct anything before saving it.")
-                        .foregroundStyle(.secondary)
-                }
-
-                HStack {
-                    Button("Import JSON / CSV") { showFileImporter = true }
-                    Button("Parse pasted listing") {
-                        draft = ListingImportParser.parse(rawText)
-                        parsed = true
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                    if let importMessage {
-                        Text(importMessage).font(.caption).foregroundStyle(.secondary)
-                    }
-                }
-
-                TextEditor(text: $rawText)
-                    .font(.system(.body, design: .monospaced))
-                    .frame(minHeight: 190)
-                    .padding(8)
-                    .background(.quaternary.opacity(0.3), in: RoundedRectangle(cornerRadius: 12))
-                    .overlay(alignment: .topLeading) {
-                        if rawText.isEmpty {
-                            Text("Paste a Marketplace, auction, Kijiji, forum, or private-sale description here…")
-                                .foregroundStyle(.tertiary)
-                                .padding(14)
-                                .allowsHitTesting(false)
-                        }
-                    }
+            VStack(alignment: .leading, spacing: 24) {
+                header
+                pastePanel
 
                 if parsed {
                     DraftEditor(draft: $draft) {
@@ -56,13 +25,12 @@ struct ImportView: View {
                     }
                 }
 
-                GroupBox("What the parser recognizes") {
-                    Text("Year, make, asking price, transmission, drivetrain, running/tow status, URL, and useful risk/build keywords such as welded diff, angle kit, cage, rust, misfire, leaks, and engine failure.")
-                        .padding(8)
-                }
+                parserLegend
             }
-            .padding(28)
+            .padding(.horizontal, 30)
+            .padding(.vertical, 26)
         }
+        .background(BuildScoutTheme.background)
         .fileImporter(
             isPresented: $showFileImporter,
             allowedContentTypes: [.json, .commaSeparatedText, .plainText],
@@ -78,6 +46,111 @@ struct ImportView: View {
             }
         }
     }
+
+    private var header: some View {
+        HStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 7) {
+                ScoutEyebrow(text: "Listing intake")
+                Text("DROP THE AD. GET THE MATH.")
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .tracking(-0.7)
+                Text("Paste a messy ad, import a dataset, or bring in community leads. Review the facts before BuildScout scores it.")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(BuildScoutTheme.muted)
+            }
+            Spacer()
+
+            Button {
+                showFileImporter = true
+            } label: {
+                Label("JSON / CSV", systemImage: "tray.and.arrow.down.fill")
+                    .font(.system(size: 10, weight: .black, design: .rounded))
+                    .tracking(0.6)
+            }
+            .buttonStyle(.bordered)
+        }
+    }
+
+    private var pastePanel: some View {
+        ScoutPanel {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    ScoutEyebrow(text: "Paste listing")
+                    Spacer()
+                    if let importMessage {
+                        Text(importMessage)
+                            .font(.caption)
+                            .foregroundStyle(BuildScoutTheme.success)
+                    }
+                }
+
+                ZStack(alignment: .topLeading) {
+                    TextEditor(text: $rawText)
+                        .font(.system(size: 12, weight: .regular, design: .monospaced))
+                        .scrollContentBackground(.hidden)
+                        .padding(8)
+                        .frame(minHeight: 210)
+                        .background(BuildScoutTheme.background, in: RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(BuildScoutTheme.border))
+
+                    if rawText.isEmpty {
+                        Text("Paste the full Marketplace / auction / forum description here…")
+                            .font(.system(size: 12, weight: .medium, design: .monospaced))
+                            .foregroundStyle(BuildScoutTheme.faint)
+                            .padding(18)
+                            .allowsHitTesting(false)
+                    }
+                }
+
+                HStack {
+                    Label(
+                        "Year • make • price • gearbox • drivetrain • running status • URL • risks • drift hardware",
+                        systemImage: "sparkles"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(BuildScoutTheme.faint)
+
+                    Spacer()
+
+                    Button {
+                        draft = ListingImportParser.parse(rawText)
+                        parsed = true
+                    } label: {
+                        Label("PARSE LISTING", systemImage: "bolt.fill")
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .tracking(0.6)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(rawText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
+        }
+    }
+
+    private var parserLegend: some View {
+        ScoutPanel {
+            HStack(alignment: .top, spacing: 18) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(BuildScoutTheme.accent.opacity(0.12))
+                        .frame(width: 50, height: 50)
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(.title2)
+                        .foregroundStyle(BuildScoutTheme.accent)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    ScoutEyebrow(text: "Parser")
+                    Text("Designed for ugly real-world ads")
+                        .font(.system(size: 14, weight: .bold))
+                    Text("It extracts obvious structured clues, then deliberately makes you review them. A seller's description is a lead, not a mechanical inspection.")
+                        .font(.caption)
+                        .foregroundStyle(BuildScoutTheme.muted)
+                }
+                Spacer()
+            }
+        }
+    }
 }
 
 private struct DraftEditor: View {
@@ -85,30 +158,46 @@ private struct DraftEditor: View {
     let save: () -> Void
 
     var body: some View {
-        GroupBox("Review parsed candidate") {
-            VStack(alignment: .leading, spacing: 14) {
-                TextField("Title", text: $draft.title)
-                    .textFieldStyle(.roundedBorder)
-
+        ScoutPanel {
+            VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    TextField("Year", value: $draft.year, format: .number)
-                        .textFieldStyle(.roundedBorder)
-                    TextField("Make", text: $draft.make)
-                        .textFieldStyle(.roundedBorder)
-                    TextField("Model", text: $draft.model)
-                        .textFieldStyle(.roundedBorder)
+                    ScoutEyebrow(text: "Review parsed candidate")
+                    Spacer()
+                    Text("EDIT BEFORE SAVING")
+                        .font(.system(size: 9, weight: .black, design: .rounded))
+                        .tracking(0.9)
+                        .foregroundStyle(BuildScoutTheme.faint)
                 }
 
-                HStack {
-                    TextField("Price", value: $draft.price, format: .number)
-                        .textFieldStyle(.roundedBorder)
-                    TextField("Location", text: $draft.location)
-                        .textFieldStyle(.roundedBorder)
-                    TextField("Source", text: $draft.source)
-                        .textFieldStyle(.roundedBorder)
+                field("TITLE") {
+                    TextField("Title", text: $draft.title)
                 }
 
-                HStack {
+                HStack(spacing: 12) {
+                    field("YEAR") {
+                        TextField("Year", value: $draft.year, format: .number)
+                    }
+                    field("MAKE") {
+                        TextField("Make", text: $draft.make)
+                    }
+                    field("MODEL") {
+                        TextField("Model", text: $draft.model)
+                    }
+                }
+
+                HStack(spacing: 12) {
+                    field("PRICE") {
+                        TextField("Price", value: $draft.price, format: .number)
+                    }
+                    field("LOCATION") {
+                        TextField("Location", text: $draft.location)
+                    }
+                    field("SOURCE") {
+                        TextField("Source", text: $draft.source)
+                    }
+                }
+
+                HStack(spacing: 14) {
                     Picker("Drive", selection: $draft.drivetrain) {
                         ForEach(Drivetrain.allCases) { Text($0.rawValue).tag($0) }
                     }
@@ -117,27 +206,78 @@ private struct DraftEditor: View {
                     }
                     Toggle("Runs", isOn: $draft.runs)
                     Toggle("Tow required", isOn: $draft.towRequired)
+                    Spacer()
                 }
 
-                if !draft.strengths.isEmpty {
-                    Text("Detected strengths: \(draft.strengths.joined(separator: ", "))")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                if !draft.riskTags.isEmpty {
-                    Text("Detected risks: \(draft.riskTags.joined(separator: ", "))")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                if !draft.strengths.isEmpty || !draft.riskTags.isEmpty {
+                    HStack(alignment: .top, spacing: 12) {
+                        if !draft.strengths.isEmpty {
+                            detectedPanel(
+                                title: "STRENGTHS",
+                                icon: "checkmark.circle.fill",
+                                color: BuildScoutTheme.success,
+                                values: draft.strengths
+                            )
+                        }
+                        if !draft.riskTags.isEmpty {
+                            detectedPanel(
+                                title: "RISKS",
+                                icon: "exclamationmark.triangle.fill",
+                                color: BuildScoutTheme.warning,
+                                values: draft.riskTags
+                            )
+                        }
+                    }
                 }
 
                 HStack {
                     Spacer()
-                    Button("Add candidate", action: save)
-                        .buttonStyle(.borderedProminent)
-                        .disabled(draft.title.isEmpty || draft.price < 0)
+                    Button(action: save) {
+                        Label("ADD CANDIDATE", systemImage: "plus.circle.fill")
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .tracking(0.6)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(draft.title.isEmpty || draft.price < 0)
                 }
             }
-            .padding(8)
         }
+    }
+
+    private func field<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 9, weight: .black, design: .rounded))
+                .tracking(0.9)
+                .foregroundStyle(BuildScoutTheme.faint)
+
+            content()
+                .textFieldStyle(.plain)
+                .padding(.horizontal, 10)
+                .frame(height: 36)
+                .background(BuildScoutTheme.background, in: RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(BuildScoutTheme.border))
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func detectedPanel(
+        title: String,
+        icon: String,
+        color: Color,
+        values: [String]
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            Label(title, systemImage: icon)
+                .font(.system(size: 9, weight: .black, design: .rounded))
+                .foregroundStyle(color)
+
+            Text(values.joined(separator: " • "))
+                .font(.caption)
+                .foregroundStyle(BuildScoutTheme.muted)
+        }
+        .padding(11)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(color.opacity(0.07), in: RoundedRectangle(cornerRadius: 10))
     }
 }

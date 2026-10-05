@@ -8,9 +8,12 @@ struct BuildScoutApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(store)
-                .frame(minWidth: 1120, minHeight: 720)
+                .preferredColorScheme(.dark)
+                .tint(BuildScoutTheme.accent)
+                .frame(minWidth: 1180, minHeight: 760)
+                .background(BuildScoutTheme.background)
         }
-        .windowStyle(.titleBar)
-        .defaultSize(width: 1280, height: 820)
+        .windowStyle(.hiddenTitleBar)
+        .defaultSize(width: 1380, height: 900)
     }
 }

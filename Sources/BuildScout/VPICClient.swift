@@ -81,6 +81,38 @@ struct VINDecodeResult: Codable, Sendable, Identifiable {
     }
 }
 
+struct CanadianSpecResponse: Codable, Sendable {
+    let Results: [CanadianSpecResult]
+}
+
+struct CanadianSpecItem: Codable, Sendable {
+    let Name: String
+    let Value: String
+}
+
+struct CanadianSpecResult: Codable, Sendable, Identifiable {
+    let Specs: [CanadianSpecItem]
+
+    var values: [String: String] {
+        Dictionary(uniqueKeysWithValues: Specs.map { ($0.Name, $0.Value) })
+    }
+
+    var id: String {
+        "\(values["Make"] ?? "")-\(values["Model"] ?? "")-\(values["MYR"] ?? "")"
+    }
+
+    var make: String { values["Make"] ?? "" }
+    var model: String { values["Model"] ?? "" }
+    var overallLengthCM: String { values["OL"] ?? "" }
+    var overallWidthCM: String { values["OW"] ?? "" }
+    var overallHeightCM: String { values["OH"] ?? "" }
+    var wheelbaseCM: String { values["WB"] ?? "" }
+    var curbWeightKG: String { values["CW"] ?? "" }
+    var frontTrackCM: String { values["TWF"] ?? "" }
+    var rearTrackCM: String { values["TWR"] ?? "" }
+    var weightDistribution: String { values["WD"] ?? "" }
+}
+
 enum VPICClient {
     static func decode(vin: String) async throws -> VINDecodeResult {
         let cleaned = vin
@@ -110,6 +142,28 @@ enum VPICClient {
             throw VPICError.noResult
         }
         return result
+    }
+
+    static func canadianSpecs(year: Int, make: String) async throws -> [CanadianSpecResult] {
+        var components = URLComponents(string: "https://vpic.nhtsa.dot.gov/api/vehicles/GetCanadianVehicleSpecifications/")!
+        components.queryItems = [
+            URLQueryItem(name: "year", value: String(year)),
+            URLQueryItem(name: "make", value: make),
+            URLQueryItem(name: "format", value: "json")
+        ]
+
+        guard let url = components.url else { throw VPICError.serverError }
+
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 15
+        request.setValue("BuildScout/0.1 (open-source vehicle planning app)", forHTTPHeaderField: "User-Agent")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
+            throw VPICError.serverError
+        }
+
+        return try JSONDecoder().decode(CanadianSpecResponse.self, from: data).Results
     }
 
     enum VPICError: LocalizedError {

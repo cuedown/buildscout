@@ -18,103 +18,181 @@ struct HunterView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Hunter").font(.largeTitle.bold())
-                    Text("Search situations, not dream cars. Use ugly/problem keywords to reach candidates before enthusiast tax arrives.")
-                        .foregroundStyle(.secondary)
-                }
-
-                GroupBox("Mission search kit") {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack {
-                            Label(store.mission.type.rawValue, systemImage: store.mission.type.symbol)
-                                .font(.headline)
-                            Spacer()
-                            Text("Vehicle budget \(store.mission.vehicleBudget.formatted(.currency(code: "CAD").precision(.fractionLength(0))))")
-                                .foregroundStyle(.secondary)
-                        }
-
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 220), spacing: 10)], spacing: 10) {
-                            ForEach(HunterDirectory.queries(for: store.mission.type), id: \.self) { query in
-                                Button {
-                                    NSPasteboard.general.clearContents()
-                                    NSPasteboard.general.setString(query, forType: .string)
-                                    copiedQuery = query
-                                } label: {
-                                    HStack {
-                                        Text(query)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                        Image(systemName: copiedQuery == query ? "checkmark" : "doc.on.doc")
-                                    }
-                                    .padding(10)
-                                }
-                                .buttonStyle(.plain)
-                                .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 10))
-                            }
-                        }
-                    }
-                    .padding(8)
-                }
-
-                HStack {
-                    Text("Sources").font(.title2.bold())
-                    Spacer()
-                    TextField("Filter sources", text: $sourceFilter)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 260)
-                }
-
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 320), spacing: 14)], spacing: 14) {
-                    ForEach(sources) { source in
-                        SourceCard(source: source)
-                    }
-                }
-
-                GroupBox("Current ingestion loop") {
-                    VStack(alignment: .leading, spacing: 7) {
-                        Text("1. Open a source.  2. Copy a promising listing.  3. Paste it into Import.  4. BuildScout normalizes and scores it.")
-                        Text("Future adapters will automate sources that provide an approved API/feed. Private-session credentials are intentionally not embedded in the project.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(8)
-                }
+                header
+                searchKit
+                sourceHeader
+                sourceGrid
+                workflowPanel
             }
-            .padding(28)
+            .padding(.horizontal, 30)
+            .padding(.vertical, 26)
+        }
+        .background(BuildScoutTheme.background)
+    }
+
+    private var header: some View {
+        HStack(alignment: .bottom) {
+            VStack(alignment: .leading, spacing: 7) {
+                ScoutEyebrow(text: "Market hunter")
+                Text("FIND THE UGLY DEALS.")
+                    .font(.system(size: 34, weight: .black, design: .rounded))
+                    .tracking(-0.7)
+                Text("Search for situations, failures, estates, and half-finished projects before enthusiast tax arrives.")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(BuildScoutTheme.muted)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(store.mission.type.rawValue.uppercased())
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+                    .tracking(1)
+                    .foregroundStyle(BuildScoutTheme.accent)
+                Text("≤ (money(store.mission.vehicleBudget)) vehicle")
+                    .font(.caption)
+                    .foregroundStyle(BuildScoutTheme.muted)
+            }
         }
     }
-}
 
-private struct SourceCard: View {
-    let source: HunterSource
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(source.name).font(.headline)
-                    Text(source.region).font(.caption).foregroundStyle(.secondary)
+    private var searchKit: some View {
+        ScoutPanel {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    ScoutEyebrow(text: "Search phrases")
+                    Spacer()
+                    Text("Click to copy")
+                        .font(.caption)
+                        .foregroundStyle(BuildScoutTheme.faint)
                 }
-                Spacer()
-                Text(source.kind.rawValue.capitalized)
-                    .font(.caption.bold())
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(.quaternary, in: Capsule())
-            }
 
-            Text(source.notes)
-                .font(.subheadline)
-
-            Text(source.strengths.joined(separator: " • "))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Link(destination: source.url) {
-                Label("Open source", systemImage: "arrow.up.right.square")
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 215), spacing: 10)], spacing: 10) {
+                    ForEach(HunterDirectory.queries(for: store.mission.type), id: \.self) { query in
+                        Button {
+                            NSPasteboard.general.clearContents()
+                            NSPasteboard.general.setString(query, forType: .string)
+                            copiedQuery = query
+                        } label: {
+                            HStack(spacing: 9) {
+                                Image(systemName: copiedQuery == query ? "checkmark.circle.fill" : "magnifyingglass")
+                                    .foregroundStyle(copiedQuery == query ? BuildScoutTheme.success : BuildScoutTheme.accent)
+                                Text(query)
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .lineLimit(1)
+                                Spacer()
+                                Image(systemName: "doc.on.doc")
+                                    .font(.caption)
+                                    .foregroundStyle(BuildScoutTheme.faint)
+                            }
+                            .padding(.horizontal, 12)
+                            .frame(height: 42)
+                            .background(BuildScoutTheme.raised, in: RoundedRectangle(cornerRadius: 10))
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(BuildScoutTheme.border))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
             }
         }
-        .padding(16)
-        .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 14))
+    }
+
+    private var sourceHeader: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                ScoutEyebrow(text: "Source directory")
+                Text("WHERE TO LOOK")
+                    .font(.system(size: 20, weight: .black, design: .rounded))
+            }
+            Spacer()
+            HStack(spacing: 8) {
+                Image(systemName: "line.3.horizontal.decrease.circle")
+                    .foregroundStyle(BuildScoutTheme.faint)
+                TextField("Filter sources", text: $sourceFilter)
+                    .textFieldStyle(.plain)
+                    .frame(width: 220)
+            }
+            .padding(.horizontal, 11)
+            .frame(height: 36)
+            .background(BuildScoutTheme.surface, in: RoundedRectangle(cornerRadius: 9))
+            .overlay(RoundedRectangle(cornerRadius: 9).stroke(BuildScoutTheme.border))
+        }
+    }
+
+    private var sourceGrid: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 330), spacing: 14)], spacing: 14) {
+            ForEach(sources) { source in
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(source.name)
+                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                            Text(source.region)
+                                .font(.caption)
+                                .foregroundStyle(BuildScoutTheme.muted)
+                        }
+                        Spacer()
+                        Text(source.kind.rawValue.uppercased())
+                            .font(.system(size: 9, weight: .black, design: .rounded))
+                            .tracking(0.7)
+                            .foregroundStyle(BuildScoutTheme.accent)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(BuildScoutTheme.accent.opacity(0.10), in: Capsule())
+                    }
+
+                    Text(source.notes)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(BuildScoutTheme.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    HStack {
+                        Text(source.strengths.joined(separator: " • "))
+                            .font(.caption2)
+                            .foregroundStyle(BuildScoutTheme.faint)
+                            .lineLimit(1)
+                        Spacer()
+                        Link(destination: source.url) {
+                            HStack(spacing: 5) {
+                                Text("OPEN")
+                                Image(systemName: "arrow.up.right")
+                            }
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .tracking(0.6)
+                        }
+                    }
+                }
+                .padding(16)
+                .background(BuildScoutTheme.surface, in: RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(BuildScoutTheme.border))
+            }
+        }
+    }
+
+    private var workflowPanel: some View {
+        ScoutPanel {
+            HStack(spacing: 18) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(BuildScoutTheme.accent.opacity(0.12))
+                        .frame(width: 50, height: 50)
+                    Image(systemName: "arrow.triangle.branch")
+                        .font(.title2)
+                        .foregroundStyle(BuildScoutTheme.accent)
+                }
+                VStack(alignment: .leading, spacing: 5) {
+                    ScoutEyebrow(text: "Current ingestion loop")
+                    Text("Open source → copy listing → Import → score → start build")
+                        .font(.system(size: 13, weight: .bold))
+                    Text("Approved feeds and APIs can automate this later without baking private credentials or brittle scraping into the app.")
+                        .font(.caption)
+                        .foregroundStyle(BuildScoutTheme.muted)
+                }
+                Spacer()
+            }
+        }
+    }
+
+    private func money(_ value: Double) -> String {
+        value.formatted(.currency(code: "CAD").precision(.fractionLength(0)))
     }
 }
