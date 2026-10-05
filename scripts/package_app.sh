@@ -17,6 +17,10 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
 cp ".build/release/$APP_NAME" "$APP/Contents/MacOS/$APP_NAME"
 
+if [ -d "$ROOT/browser-extension" ]; then
+    ditto "$ROOT/browser-extension" "$APP/Contents/Resources/BrowserExtension"
+fi
+
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -44,6 +48,17 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <string>14.0</string>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>ca.buildscout.capture</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>buildscout</string>
+            </array>
+        </dict>
+    </array>
 </dict>
 </plist>
 PLIST
@@ -54,6 +69,16 @@ fi
 
 ditto -c -k --sequesterRsrc --keepParent "$APP" "$DIST/BuildScout-macOS.zip"
 
+if [ -d "$ROOT/browser-extension" ]; then
+    (
+        cd "$ROOT"
+        ditto -c -k --sequesterRsrc browser-extension "$DIST/BuildScout-Capture-Extension.zip"
+    )
+fi
+
 echo "Created:"
 echo "  $APP"
 echo "  $DIST/BuildScout-macOS.zip"
+if [ -f "$DIST/BuildScout-Capture-Extension.zip" ]; then
+    echo "  $DIST/BuildScout-Capture-Extension.zip"
+fi

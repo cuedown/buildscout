@@ -8,12 +8,17 @@ struct ImportView: View {
     @State private var parsed = false
     @State private var showFileImporter = false
     @State private var importMessage: String?
+    @State private var capturedBatch: [VehicleListing] = []
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 header
                 pastePanel
+
+                if !capturedBatch.isEmpty {
+                    capturedBatchPanel
+                }
 
                 if parsed {
                     DraftEditor(draft: $draft) {
@@ -31,6 +36,12 @@ struct ImportView: View {
             .padding(.vertical, 26)
         }
         .background(BuildScoutTheme.background)
+        .onAppear {
+            consumeBrowserCaptureIfNeeded()
+        }
+        .onChange(of: store.pendingBrowserCapture?.id) { _, _ in
+            consumeBrowserCaptureIfNeeded()
+        }
         .fileImporter(
             isPresented: $showFileImporter,
             allowedContentTypes: [.json, .commaSeparatedText, .plainText],
@@ -43,6 +54,133 @@ struct ImportView: View {
                 importMessage = "Imported \(listings.count) listing\(listings.count == 1 ? "" : "s")."
             } catch {
                 importMessage = "Import failed: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    private func consumeBrowserCaptureIfNeeded() {
+        guard let capture = store.pendingBrowserCapture else { return }
+
+        if !capture.items.isEmpty {
+            var seen = Set<String>()
+            capturedBatch = capture.items.compactMap { item in
+                let composite = [
+                    item.title,
+                    item.text,
+                    item.url
+                ]
+                .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                .joined(separator: "\n")
+
+                var parsedDraft = ListingImportParser.parse(composite)
+                parsedDraft.source = capture.source
+                parsedDraft.url = item.url
+
+                let listing = parsedDraft.makeListing()
+                let key = listing.url ?? "\(listing.title)|\(Int(listing.price))"
+                guard seen.insert(key).inserted else { return nil }
+
+                let titleHasYear = listing.title.range(
+                    of: #"\b(19[7-9]\d|20[0-2]\d)\b"#,
+                    options: .regularExpression
+                ) != nil
+                let useful = listing.price > 0 || titleHasYear || !listing.make.isEmpty
+                return useful ? listing : nil
+            }
+
+            parsed = false
+            rawText = ""
+            importMessage = "Captured \(capturedBatch.count) visible listing leads from \(capture.source)."
+        } else {
+            rawText = [
+                capture.title,
+                capture.text,
+                capture.pageURL
+            ]
+            .filter { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .joined(separator: "\n")
+
+            draft = ListingImportParser.parse(rawText)
+            draft.source = capture.source
+            draft.url = capture.pageURL
+            parsed = true
+            capturedBatch = []
+            importMessage = "Captured from \(capture.source). Review before saving."
+        }
+
+        store.pendingBrowserCapture = nil
+    }
+
+    private var capturedBatchPanel: some View {
+        ScoutPanel {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        ScoutEyebrow(text: "Visible results capture")
+                        Text("\(capturedBatch.count) LISTING LEADS")
+                            .font(.system(size: 18, weight: .black, design: .rounded))
+                    }
+
+                    Spacer()
+
+                    Button {
+                        store.addListings(capturedBatch)
+                        importMessage = "Added \(capturedBatch.count) captured candidates."
+                        capturedBatch = []
+                    } label: {
+                        Label("ADD ALL CANDIDATES", systemImage: "tray.and.arrow.down.fill")
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .tracking(0.5)
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+
+                ForEach(capturedBatch.prefix(20)) { listing in
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(listing.title)
+                                .font(.system(size: 12, weight: .bold))
+                                .lineLimit(1)
+
+                            Text(
+                                [
+                                    listing.location,
+                                    listing.transmission == .unknown ? nil : listing.transmission.rawValue,
+                                    listing.drivetrain == .unknown ? nil : listing.drivetrain.rawValue
+                                ]
+                                .compactMap { $0 }
+                                .filter { !$0.isEmpty }
+                                .joined(separator: " • ")
+                            )
+                            .font(.caption2)
+                            .foregroundStyle(BuildScoutTheme.faint)
+                        }
+
+                        Spacer()
+
+                        if listing.price > 0 {
+                            Text(
+                                listing.price.formatted(
+                                    .currency(code: "CAD").precision(.fractionLength(0))
+                                )
+                            )
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundStyle(BuildScoutTheme.success)
+                        }
+                    }
+
+                    Divider().overlay(BuildScoutTheme.border)
+                }
+
+                if capturedBatch.count > 20 {
+                    Text("+ \(capturedBatch.count - 20) more captured leads")
+                        .font(.caption)
+                        .foregroundStyle(BuildScoutTheme.faint)
+                }
+
+                Text("This is a user-triggered snapshot of the results already rendered in your browser. BuildScout does not crawl pagination or silently browse behind your session.")
+                    .font(.caption)
+                    .foregroundStyle(BuildScoutTheme.muted)
             }
         }
     }

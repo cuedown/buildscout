@@ -75,6 +75,23 @@ BuildScout currently performs domain-scoped indexed searches for vehicle classif
 
 A future adapter can replace indexed discovery with an official Discourse API, XenForo API, RSS/Atom feed, or forum-provided read-only key whenever a community offers one.
 
+## Browser Capture bridge
+
+BuildScout ships a companion WebExtension for Firefox and Chromium-family browsers.
+
+It can explicitly capture:
+
+- the current listing page
+- listing cards already visible on the current search-results page
+
+The extension uses the local buildscout:// deep-link protocol to send the capture directly into the macOS Import workspace. It does not need a BuildScout cloud server, does not transmit browser cookies, and does not silently paginate.
+
+This gives closed marketplaces a high-fidelity user-mediated route even when automated provider access is unavailable.
+
+## Partnership path
+
+The repository includes partnerships/README.md with a standard read-only inventory-access proposal. Long-term direct access is preferable to any brittle collector when a marketplace is willing to provide a feed or partner endpoint.
+
 ## Community collectors / open-source bridges
 
 BuildScout does not need to copy every scraper into the application. It can ingest arbitrary JSON and CSV exports through the flexible external-dataset normalizer.

@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BuildScout Capture</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { margin: 0; width: 320px; font: 13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background: #101216; color: #f7f7f8; }
+    main { padding: 16px; }
+    .brand { font-weight: 900; letter-spacing: .08em; margin-bottom: 4px; }
+    .sub { color: #a8abb3; line-height: 1.35; margin-bottom: 14px; }
+    button { width: 100%; border: 1px solid #343741; border-radius: 9px; padding: 10px 12px; margin: 5px 0; color: #fff; background: #1b1e25; font-weight: 750; cursor: pointer; }
+    button.primary { color: #111; background: #ff7614; border-color: #ff7614; }
+    #status { min-height: 32px; color: #b8bbc4; font-size: 11px; line-height: 1.35; margin-top: 10px; }
+    .fine { color: #727680; font-size: 10px; line-height: 1.35; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="brand">BUILDSCOUT CAPTURE</div>
+    <div class="sub">Use your logged-in browser as the last-mile bridge. Nothing runs until you click.</div>
+    <button id="listing" class="primary">Capture this listing</button>
+    <button id="visible">Capture visible result cards</button>
+    <div id="status"></div>
+    <div class="fine">The capture is also copied to your clipboard as a fallback. This extension does not paginate, crawl in the background, or export your browser cookies.</div>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

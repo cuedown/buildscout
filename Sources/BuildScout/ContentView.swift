@@ -22,6 +22,11 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(BuildScoutTheme.background)
+        .onChange(of: store.pendingBrowserCapture?.id) { _, newValue in
+            if newValue != nil {
+                section = .importListings
+            }
+        }
     }
 
     private var sidebar: some View {

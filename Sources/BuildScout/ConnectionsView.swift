@@ -145,6 +145,8 @@ struct ConnectionsView: View {
                     }
                 }
 
+                BrowserCaptureConnectionCard()
+
                 ApifyConnectionCard()
 
                 ScoutPanel {

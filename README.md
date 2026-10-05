@@ -32,6 +32,8 @@ A cheap shell is not automatically a cheap build. BuildScout tries to expose tha
 - Official eBay Browse parts integration
 - Optional SerpApi discovery across web, Shopping, eBay, YouTube, Maps, aggregators and forums
 - Optional Apify adapters for Facebook Marketplace, Kijiji, Craigslist, Copart and IAA
+- Bundled Firefox/Chromium Browser Capture extension for one-click current-listing or visible-results ingestion
+- Local buildscout:// deep-link intake with review-before-save
 - Cross-source VIN / URL / fingerprint deduplication
 - Local listing observation history and price-drop detection
 - Live parts sourcing plus enthusiast-forum parts discovery

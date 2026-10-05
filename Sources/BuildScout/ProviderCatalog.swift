@@ -397,6 +397,17 @@ enum ProviderCatalog {
             documentationURL: URL(string: "https://github.com/AdsTable/car-aggregator")
         ),
         .init(
+            id: "browser-capture",
+            name: "BuildScout Browser Capture",
+            tier: .live,
+            category: "User-mediated intake",
+            capabilities: ["current listing", "visible result cards", "logged-in marketplace pages", "local-only deep link"],
+            auth: "User browser session stays in the browser",
+            endpoint: "buildscout://capture",
+            notes: "Bundled WebExtension. Explicit click only; no silent pagination or cookie export.",
+            documentationURL: nil
+        ),
+        .init(
             id: "forum-federation",
             name: "Enthusiast forum federation",
             tier: .optional,

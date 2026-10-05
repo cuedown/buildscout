@@ -22,6 +22,7 @@ final class ListingStore: ObservableObject {
     @Published var selectedListingID: UUID?
     @Published var query = ""
     @Published var favoritesOnly = false
+    @Published var pendingBrowserCapture: BrowserCapture?
 
     init() {
         if let state = PersistenceStore.load() {
@@ -65,6 +66,10 @@ final class ListingStore: ObservableObject {
     func addListing(_ listing: VehicleListing) {
         listings.insert(listing, at: 0)
         selectedListingID = listing.id
+    }
+
+    func receiveBrowserCapture(_ capture: BrowserCapture) {
+        pendingBrowserCapture = capture
     }
 
     func addListings(_ newListings: [VehicleListing]) {

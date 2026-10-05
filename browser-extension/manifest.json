@@ -1,0 +1,17 @@
+{
+  "manifest_version": 3,
+  "name": "BuildScout Capture",
+  "version": "0.1.0",
+  "description": "Send the current vehicle listing or visible search results to the BuildScout macOS app.",
+  "permissions": ["activeTab", "scripting", "clipboardWrite"],
+  "action": {
+    "default_title": "Send to BuildScout",
+    "default_popup": "popup.html"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "capture@buildscout.ca",
+      "strict_min_version": "121.0"
+    }
+  }
+}
