@@ -109,14 +109,35 @@ private struct ProjectDetail: View {
                 }
 
                 VStack(alignment: .leading, spacing: 10) {
-                    Text("Build ledger").font(.title2.bold())
+                    HStack {
+                        Text("Build ledger").font(.title2.bold())
+                        Spacer()
+                        Button {
+                            project.tasks.append(
+                                ProjectTask(
+                                    title: "New item",
+                                    category: "Custom",
+                                    estimatedCost: 0,
+                                    actualCost: nil,
+                                    required: false
+                                )
+                            )
+                        } label: {
+                            Label("Add item", systemImage: "plus")
+                        }
+                    }
 
                     ForEach($project.tasks) { $task in
                         VStack(alignment: .leading, spacing: 8) {
                             HStack {
-                                VStack(alignment: .leading, spacing: 3) {
-                                    Text(task.title).font(.headline)
-                                    Text(task.category).font(.caption).foregroundStyle(.secondary)
+                                VStack(alignment: .leading, spacing: 5) {
+                                    TextField("Item", text: $task.title)
+                                        .font(.headline)
+                                        .textFieldStyle(.plain)
+                                    TextField("Category", text: $task.category)
+                                        .font(.caption)
+                                        .textFieldStyle(.plain)
+                                        .foregroundStyle(.secondary)
                                 }
 
                                 Spacer()
@@ -165,7 +186,19 @@ private struct ProjectDetail: View {
                 }
 
                 HStack {
+                    Menu {
+                        Button("Markdown") {
+                            ProjectExporter.saveMarkdown(project)
+                        }
+                        Button("JSON") {
+                            ProjectExporter.saveJSON(project)
+                        }
+                    } label: {
+                        Label("Export", systemImage: "square.and.arrow.up")
+                    }
+
                     Spacer()
+
                     Button("Delete project", role: .destructive) {
                         store.removeProject(project.id)
                     }

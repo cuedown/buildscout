@@ -20,7 +20,8 @@ A cheap shell is not automatically a cheap build. BuildScout tries to expose tha
 - Platform intelligence for common project-car families
 - Risk and known-failure warnings
 - Favorite candidates
-- Persistent project builds with task status and actual-vs-estimated spend
+- Persistent project builds with editable line items, task status, and actual-vs-estimated spend
+- Markdown / JSON build export for forum sharing and backups
 - Garage skill/tool profile that changes build estimates
 - Hunter workspace with project-car search phrases and source directory
 - Live NHTSA vPIC VIN decoding with one-click candidate creation
