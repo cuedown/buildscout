@@ -152,13 +152,41 @@ enum ListingImportParser {
             if let many = try? JSONDecoder().decode([VehicleListing].self, from: data) {
                 return many
             }
-            return [try JSONDecoder().decode(VehicleListing.self, from: data)]
+            if let single = try? JSONDecoder().decode(VehicleListing.self, from: data) {
+                return [single]
+            }
+            return try ExternalDatasetImporter.decodeJSON(
+                data,
+                sourceName: url.deletingPathExtension().lastPathComponent
+            )
         }
 
         guard let text = String(data: data, encoding: .utf8) else {
             throw ImportError.unreadableFile
         }
-        return try decodeCSV(text)
+
+        let header = text
+            .split(whereSeparator: \.isNewline)
+            .first
+            .map(String.init)?
+            .lowercased() ?? ""
+
+        let looksNative = [
+            "source", "title", "year", "make", "model", "price",
+            "drivetrain", "transmission"
+        ].allSatisfy { header.contains($0) }
+
+        if looksNative {
+            let native = (try? decodeCSV(text)) ?? []
+            if !native.isEmpty {
+                return native
+            }
+        }
+
+        return ExternalDatasetImporter.decodeCSV(
+            text,
+            sourceName: url.deletingPathExtension().lastPathComponent
+        )
     }
 
     static func decodeCSV(_ text: String) throws -> [VehicleListing] {

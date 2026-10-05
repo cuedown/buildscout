@@ -43,6 +43,20 @@ final class ConnectionStore: ObservableObject {
         }
     }
 
+    @Published var apifyToken = "" {
+        didSet {
+            if apifyToken != SecureStore.get("apify-token") {
+                SecureStore.set(apifyToken, for: "apify-token")
+            }
+        }
+    }
+
+    @Published var enableApifyFacebook = false
+    @Published var enableApifyKijiji = false
+    @Published var enableApifyCraigslist = false
+    @Published var enableApifySalvage = false
+    @Published var apifyMaxResultsPerSource = 25
+
     @Published var preferredCountry = "Canada"
     @Published var preferredRegion = "Calgary, Alberta"
 
@@ -52,6 +66,7 @@ final class ConnectionStore: ObservableObject {
         eBayClientSecret = SecureStore.get("ebay-client-secret")
         marketCheckAPIKey = SecureStore.get("marketcheck-api-key")
         carsXEAPIKey = SecureStore.get("carsxe-api-key")
+        apifyToken = SecureStore.get("apify-token")
     }
 
     var hasSerpAPI: Bool { !serpAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
@@ -64,6 +79,9 @@ final class ConnectionStore: ObservableObject {
     }
     var hasCarsXE: Bool {
         !carsXEAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    var hasApify: Bool {
+        !apifyToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 }
 

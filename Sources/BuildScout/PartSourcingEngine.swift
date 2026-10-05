@@ -76,6 +76,14 @@ enum PartSourcingEngine {
                             apiKey: serpKey
                         )) ?? []
                     }
+
+                    group.addTask {
+                        await ForumFederation.searchParts(
+                            listing: listing,
+                            task: task,
+                            connections: connections
+                        )
+                    }
                 }
 
                 if connections.hasEBay {

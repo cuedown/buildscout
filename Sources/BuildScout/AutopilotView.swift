@@ -85,6 +85,7 @@ struct AutopilotView: View {
                         status("PUBLIC DATA", true)
                         status("MARKETCHECK", connections.hasMarketCheck)
                         status("WEB", connections.hasSerpAPI)
+                        status("APIFY", connections.hasApify)
                         status("EBAY", connections.hasEBay)
                     }
                 }
@@ -150,12 +151,12 @@ struct AutopilotView: View {
                             .tracking(0.5)
                         }
                         .buttonStyle(.borderedProminent)
-                        .disabled(discovering || running || (!connections.hasMarketCheck && !connections.hasSerpAPI))
+                        .disabled(discovering || running || (!connections.hasMarketCheck && !connections.hasSerpAPI && !connections.hasApify))
                     }
                     .padding(.top, 4)
                 }
 
-                if !connections.hasSerpAPI && !connections.hasEBay && !connections.hasMarketCheck {
+                if !connections.hasSerpAPI && !connections.hasEBay && !connections.hasMarketCheck && !connections.hasApify {
                     Text("Autopilot will still run keyless vehicle/safety/configuration APIs, but parts sourcing and web research will remain incomplete until a live search provider is connected.")
                         .font(.caption)
                         .foregroundStyle(BuildScoutTheme.warning)

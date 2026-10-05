@@ -263,6 +263,149 @@ enum ProviderCatalog {
             endpoint: nil,
             notes: "Useful market-comp source; BuildScout does not assume a public inventory API.",
             documentationURL: URL(string: "https://www.autotrader.ca/")
+        ),
+        .init(
+            id: "apify-facebook",
+            name: "Apify • Facebook Marketplace",
+            tier: .optional,
+            category: "Classifieds",
+            capabilities: ["public listing search", "vehicle details", "price", "location", "images"],
+            auth: "Apify API token",
+            endpoint: "automly/facebook-marketplace-scraper",
+            notes: "Third-party actor integration. Disabled by default; users are responsible for source and actor terms.",
+            documentationURL: URL(string: "https://apify.com/automly/facebook-marketplace-scraper")
+        ),
+        .init(
+            id: "apify-kijiji",
+            name: "Apify • Kijiji",
+            tier: .optional,
+            category: "Classifieds",
+            capabilities: ["vehicle search", "price", "year/make/model", "kilometres", "drivetrain", "photos"],
+            auth: "Apify API token",
+            endpoint: "fayoussef/kijiji-scraper",
+            notes: "Third-party actor integration. Disabled by default; users are responsible for source and actor terms.",
+            documentationURL: URL(string: "https://apify.com/fayoussef/kijiji-scraper")
+        ),
+        .init(
+            id: "apify-craigslist",
+            name: "Apify • Craigslist",
+            tier: .optional,
+            category: "Classifieds",
+            capabilities: ["cars/trucks search", "price", "location", "images", "description"],
+            auth: "Apify API token",
+            endpoint: "logiover/craigslist-scraper",
+            notes: "Third-party actor integration. Disabled by default; users are responsible for source and actor terms.",
+            documentationURL: URL(string: "https://apify.com/logiover/craigslist-scraper")
+        ),
+        .init(
+            id: "apify-copart",
+            name: "Apify • Copart",
+            tier: .optional,
+            category: "Auctions",
+            capabilities: ["salvage lots", "VIN", "damage", "odometer", "bids", "auction dates"],
+            auth: "Apify API token",
+            endpoint: "crawlerbros/copart-public-search-scraper",
+            notes: "Third-party auction actor. Disabled by default and rate/cost bounded in Connections.",
+            documentationURL: URL(string: "https://apify.com/crawlerbros/copart-public-search-scraper")
+        ),
+        .init(
+            id: "apify-iaa",
+            name: "Apify • IAA",
+            tier: .optional,
+            category: "Auctions",
+            capabilities: ["salvage lots", "damage", "odometer", "title", "run-and-drive", "ACV"],
+            auth: "Apify API token",
+            endpoint: "scrapers_lat/iaai-salvage-cars-scraper",
+            notes: "Third-party auction actor. IAA inventory is primarily U.S.; keep geography explicit.",
+            documentationURL: URL(string: "https://apify.com/scrapers_lat/iaai-salvage-cars-scraper")
+        ),
+        .init(
+            id: "carscout",
+            name: "CarScout",
+            tier: .directory,
+            category: "Aggregators",
+            capabilities: ["Canadian multi-market discovery", "deal scoring", "Facebook/Kijiji/AutoTrader/Craigslist coverage"],
+            auth: "Website / indexed discovery",
+            endpoint: nil,
+            notes: "No BuildScout API assumed. Used as a federated indexed source when web discovery is connected.",
+            documentationURL: URL(string: "https://getcarscout.ca/")
+        ),
+        .init(
+            id: "autotempest",
+            name: "AutoTempest",
+            tier: .directory,
+            category: "Aggregators",
+            capabilities: ["cross-market search", "comparison links", "vehicle discovery"],
+            auth: "Website / indexed discovery",
+            endpoint: nil,
+            notes: "Used as a federated indexed source; no undocumented first-party API is assumed.",
+            documentationURL: URL(string: "https://www.autotempest.com/")
+        ),
+        .init(
+            id: "classic-com",
+            name: "CLASSIC.COM",
+            tier: .directory,
+            category: "Aggregators",
+            capabilities: ["auction/dealer/private index", "historical comps", "specialty inventory"],
+            auth: "Website / indexed discovery",
+            endpoint: nil,
+            notes: "Useful for unusual chassis and valuation comps; accessed through indexed discovery until licensed API access exists.",
+            documentationURL: URL(string: "https://www.classic.com/")
+        ),
+        .init(
+            id: "the-parking",
+            name: "The Parking",
+            tier: .directory,
+            category: "Aggregators",
+            capabilities: ["international listing index", "used-car discovery"],
+            auth: "Website / indexed discovery",
+            endpoint: nil,
+            notes: "Federated indexed source, especially useful when the search radius expands beyond one marketplace.",
+            documentationURL: URL(string: "https://www.theparking.ca/")
+        ),
+        .init(
+            id: "oss-car-aggregator",
+            name: "jamir0quai/car-aggregator",
+            tier: .directory,
+            category: "Community bridges",
+            capabilities: ["normalized SQLite", "price history", "AutoTrader/eBay/Facebook adapter architecture"],
+            auth: "Local/community project",
+            endpoint: nil,
+            notes: "Architecture/reference bridge only. BuildScout can ingest exported normalized data without embedding its scraping behavior.",
+            documentationURL: URL(string: "https://github.com/jamir0quai/car-aggregator")
+        ),
+        .init(
+            id: "oss-usa-car-search",
+            name: "Frojoe6969/usa-car-search",
+            tier: .directory,
+            category: "Community bridges",
+            capabilities: ["seven-source aggregation", "VIN/fingerprint dedupe", "removed-listing tracking", "deal scoring"],
+            auth: "Local/community project",
+            endpoint: nil,
+            notes: "MIT-licensed reference project; useful for dedupe, seen-state and provider isolation patterns.",
+            documentationURL: URL(string: "https://github.com/Frojoe6969/usa-car-search")
+        ),
+        .init(
+            id: "oss-auction-aggregator",
+            name: "AdsTable/car-aggregator",
+            tier: .directory,
+            category: "Community bridges",
+            capabilities: ["Copart/IAA aggregation", "scheduled crawling", "normalized auction backend"],
+            auth: "Local/community project",
+            endpoint: nil,
+            notes: "Reference implementation for auction normalization and background-job architecture.",
+            documentationURL: URL(string: "https://github.com/AdsTable/car-aggregator")
+        ),
+        .init(
+            id: "forum-federation",
+            name: "Enthusiast forum federation",
+            tier: .optional,
+            category: "Forums / classifieds",
+            capabilities: ["vehicle classifieds", "used parts", "build threads", "swap knowledge"],
+            auth: "SerpApi indexed discovery; direct forum APIs/feeds can be added later",
+            endpoint: nil,
+            notes: "Domain-scoped discovery currently covers BMW, Nissan/VQ, Subaru, Mustang, Volvo, Lexus, RX-8, grassroots motorsport and overland communities.",
+            documentationURL: nil
         )
     ]
 }

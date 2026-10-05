@@ -60,17 +60,17 @@ enum MarketCheckClient {
             provider: "MarketCheck • Active"
         )
 
-        async let auction = search(
-            endpoint: "https://api.marketcheck.com/v2/search/car/auction/active",
+        async let privateParty = search(
+            endpoint: "https://api.marketcheck.com/v2/search/car/fsbo/active",
             apiKey: apiKey,
             mission: mission,
             maximumPrice: maximumPrice,
             city: geo.city,
             province: geo.province,
-            provider: "MarketCheck • Auctions"
+            provider: "MarketCheck • Private"
         )
 
-        return try await dedupe(dealer + auction)
+        return try await dedupe(dealer + privateParty)
     }
 
     static func comparables(

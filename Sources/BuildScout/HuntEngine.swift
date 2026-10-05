@@ -25,6 +25,8 @@ struct HuntResult: Identifiable, Hashable {
     var odometerKM: Double? = nil
     var drivetrain: Drivetrain? = nil
     var transmission: TransmissionType? = nil
+    var previousPrice: Double? = nil
+    var seenCount: Int? = nil
 }
 
 struct HuntRequest {
@@ -52,6 +54,14 @@ enum HuntEngine {
             ) {
                 results.append(contentsOf: market)
             }
+        }
+
+        if connections.hasApify {
+            let actorResults = await ApifyAutomotiveSources.search(
+                request: request,
+                connections: connections
+            )
+            results.append(contentsOf: actorResults)
         }
 
         if connections.hasSerpAPI {
@@ -101,6 +111,18 @@ enum HuntEngine {
                     results.append(contentsOf: batch)
                 }
             }
+
+            let federated = await FederatedDiscovery.search(
+                request: request,
+                connections: connections
+            )
+            results.append(contentsOf: federated)
+
+            let forumVehicles = await ForumFederation.searchVehicles(
+                request: request,
+                connections: connections
+            )
+            results.append(contentsOf: forumVehicles)
         }
 
         if connections.hasEBay, let vehicle = request.preferredVehicle {
@@ -114,68 +136,79 @@ enum HuntEngine {
             }
         }
 
-        return dedupe(results)
+        let deduped = CrossSourceDeduper.dedupe(results)
+        return await HuntHistoryStore.shared.enrichAndRecord(deduped)
     }
 
-    static func queries(for mission: MissionType, budget: Double) -> [String] {
+    static func queries(
+        for mission: MissionType,
+        budget: Double,
+        location: String = "Alberta"
+    ) -> [String] {
         let budgetText = Int(budget)
+        let region = location.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Canada" : location
+
         switch mission {
         case .drift:
             return [
-                "RWD manual project car under $\(budgetText) Alberta",
-                "non running BMW RWD project Alberta",
-                "blown engine manual RWD project Alberta",
-                "350Z G35 project Alberta",
-                "Mustang manual project Alberta"
+                "RWD manual project car under $\(budgetText) \(region)",
+                "non running BMW RWD project \(region)",
+                "engine failure manual RWD project \(region)",
+                "350Z G35 project \(region)",
+                "Mustang manual project \(region)"
             ]
         case .overland:
             return [
-                "4x4 project SUV under $\(budgetText) Alberta",
-                "AWD wagon project Alberta",
-                "fleet 4WD auction Alberta",
-                "high mileage 4x4 mechanic special Alberta"
+                "4x4 project SUV under $\(budgetText) \(region)",
+                "AWD wagon project \(region)",
+                "fleet 4WD auction \(region)",
+                "high mileage 4x4 mechanic special \(region)"
             ]
         case .camper:
             return [
-                "cargo van project under $\(budgetText) Alberta",
-                "fleet van auction Alberta",
-                "wagon camper project Alberta",
-                "minivan mechanic special Alberta"
+                "cargo van project under $\(budgetText) \(region)",
+                "fleet van auction \(region)",
+                "wagon camper project \(region)",
+                "minivan mechanic special \(region)"
             ]
         case .rally:
             return [
-                "AWD manual project car Alberta",
-                "Subaru project Alberta",
-                "rally car shell Alberta",
-                "winter beater manual auction Alberta"
+                "AWD manual project car \(region)",
+                "Subaru project \(region)",
+                "rally car shell \(region)",
+                "winter beater manual auction \(region)"
             ]
         case .track:
             return [
-                "manual coupe project Alberta",
-                "track car project Alberta",
-                "roller chassis Alberta",
-                "sports car needs engine Alberta"
+                "manual coupe project \(region)",
+                "track car project \(region)",
+                "roller chassis \(region)",
+                "sports car needs engine \(region)"
             ]
         case .winter:
             return [
-                "AWD winter beater Alberta",
-                "4x4 mechanic special Alberta",
-                "old Subaru manual Alberta",
-                "fleet AWD auction Alberta"
+                "AWD winter beater \(region)",
+                "4x4 mechanic special \(region)",
+                "old Subaru manual \(region)",
+                "fleet AWD auction \(region)"
             ]
         case .custom:
             return [
-                "project car mechanic special Alberta",
-                "does not run car Alberta",
-                "needs engine car Alberta",
-                "estate vehicle auction Alberta",
-                "lost interest project car Alberta"
+                "project car mechanic special \(region)",
+                "does not run car \(region)",
+                "needs engine car \(region)",
+                "estate vehicle auction \(region)",
+                "lost interest project car \(region)"
             ]
         }
     }
 
     private static func auctionDomainQuery(for request: HuntRequest) -> String {
-        let base = HuntEngine.queries(for: request.mission, budget: request.maxVehiclePrice).first ?? "project car Alberta"
+        let base = HuntEngine.queries(
+            for: request.mission,
+            budget: request.maxVehiclePrice,
+            location: request.location
+        ).first ?? "project car \(request.location)"
         return "\(base) (site:copart.ca OR site:iaai.com OR site:teamauctions.com OR site:grahamauctions.com OR site:maauctions.com OR site:govdeals.ca)"
     }
 

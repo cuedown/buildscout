@@ -22,7 +22,8 @@ enum MissionAutopilotEngine {
             mission: mission.type,
             keywords: HuntEngine.queries(
                 for: mission.type,
-                budget: mission.vehicleBudget
+                budget: mission.vehicleBudget,
+                location: connections.preferredRegion
             ),
             location: connections.preferredRegion,
             maxVehiclePrice: mission.vehicleBudget,

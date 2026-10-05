@@ -13,8 +13,8 @@ struct HunterView: View {
     @State private var resultFilter: HuntResultKind?
 
     private var sources: [HunterSource] {
-        guard !sourceFilter.isEmpty else { return HunterDirectory.sources }
-        return HunterDirectory.sources.filter {
+        guard !sourceFilter.isEmpty else { return HunterDirectory.allSources }
+        return HunterDirectory.allSources.filter {
             $0.name.localizedCaseInsensitiveContains(sourceFilter) ||
             $0.region.localizedCaseInsensitiveContains(sourceFilter) ||
             $0.kind.rawValue.localizedCaseInsensitiveContains(sourceFilter)
@@ -302,7 +302,9 @@ struct HunterView: View {
 
     private var liveProviderSummary: String {
         var active: [String] = []
-        if connections.hasSerpAPI { active.append("Google web / Shopping / eBay via SerpApi") }
+        if connections.hasMarketCheck { active.append("MarketCheck dealer + private inventory") }
+        if connections.hasSerpAPI { active.append("web indexes + forums + Shopping via SerpApi") }
+        if connections.hasApify { active.append("opt-in marketplace / salvage actors") }
         if connections.hasEBay { active.append("native eBay Browse") }
         return active.isEmpty ? "No keyed live-search provider connected yet." : active.joined(separator: " + ")
     }
@@ -313,7 +315,11 @@ struct HunterView: View {
 
         let request = HuntRequest(
             mission: store.mission.type,
-            keywords: HuntEngine.queries(for: store.mission.type, budget: store.mission.vehicleBudget),
+            keywords: HuntEngine.queries(
+                for: store.mission.type,
+                budget: store.mission.vehicleBudget,
+                location: connections.preferredRegion
+            ),
             location: connections.preferredRegion,
             maxVehiclePrice: store.mission.vehicleBudget,
             preferredVehicle: store.selectedEvaluation?.listing ?? store.evaluations.first?.listing
@@ -384,9 +390,26 @@ struct HunterView: View {
             }
 
             if let price = result.price {
-                Text(price.formatted(.currency(code: result.currency ?? "CAD").precision(.fractionLength(0))))
-                    .font(.system(size: 18, weight: .black, design: .rounded))
-                    .foregroundStyle(BuildScoutTheme.success)
+                HStack(spacing: 8) {
+                    Text(price.formatted(.currency(code: result.currency ?? "CAD").precision(.fractionLength(0))))
+                        .font(.system(size: 18, weight: .black, design: .rounded))
+                        .foregroundStyle(BuildScoutTheme.success)
+
+                    if let previous = result.previousPrice, previous > price {
+                        Text("↓ \((previous - price).formatted(.currency(code: result.currency ?? "CAD").precision(.fractionLength(0))))")
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .foregroundStyle(BuildScoutTheme.success)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
+                            .background(BuildScoutTheme.success.opacity(0.1), in: Capsule())
+                    }
+
+                    if let seen = result.seenCount, seen > 1 {
+                        Text("SEEN \(seen)×")
+                            .font(.system(size: 8, weight: .black, design: .rounded))
+                            .foregroundStyle(BuildScoutTheme.faint)
+                    }
+                }
             }
 
             if !result.snippet.isEmpty {

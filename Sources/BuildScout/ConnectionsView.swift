@@ -145,6 +145,8 @@ struct ConnectionsView: View {
                     }
                 }
 
+                ApifyConnectionCard()
+
                 ScoutPanel {
                     VStack(alignment: .leading, spacing: 12) {
                         ScoutEyebrow(text: "Search geography")

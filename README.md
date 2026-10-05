@@ -23,11 +23,21 @@ A cheap shell is not automatically a cheap build. BuildScout tries to expose tha
 - Persistent project builds with editable line items, task status, and actual-vs-estimated spend
 - Markdown / JSON build export for forum sharing and backups
 - Garage skill/tool profile that changes build estimates
-- Hunter workspace with project-car search phrases and source directory
+- Hunter workspace with live multi-provider discovery
+- Autopilot: mission → live hunt → normalize → rank → deep-dive → project
 - Live NHTSA vPIC VIN decoding with one-click candidate creation
+- NHTSA recall / complaint / safety intelligence
+- FuelEconomy.gov configuration lookup
+- Official MarketCheck dealer/private inventory integration
+- Official eBay Browse parts integration
+- Optional SerpApi discovery across web, Shopping, eBay, YouTube, Maps, aggregators and forums
+- Optional Apify adapters for Facebook Marketplace, Kijiji, Craigslist, Copart and IAA
+- Cross-source VIN / URL / fingerprint deduplication
+- Local listing observation history and price-drop detection
+- Live parts sourcing plus enthusiast-forum parts discovery
 - Local persistence between launches
 - Paste-a-listing parser
-- JSON and CSV bulk import
+- BuildScout JSON/CSV plus flexible external scraper/export import
 - Original-listing links
 - Source-adapter protocol
 - Public roadmap and contribution templates
@@ -73,7 +83,9 @@ You can paste an ad directly into BuildScout. The parser attempts to detect:
 
 Everything remains editable before you add the candidate.
 
-Bulk JSON and CSV imports are also supported. See [docs/DATA_FORMAT.md](docs/DATA_FORMAT.md).
+Bulk JSON and CSV imports are also supported. The flexible importer can normalize common exports from external automotive collectors rather than requiring an exact BuildScout schema. See [docs/DATA_FORMAT.md](docs/DATA_FORMAT.md).
+
+For the current provider matrix and federation strategy, see [docs/SOURCES.md](docs/SOURCES.md).
 
 ## Data-source philosophy
 
@@ -124,16 +136,16 @@ The packaged app and zip are written to `dist/`. Tagged releases can be packaged
 
 The next major systems are:
 
-1. real auction and classified adapters
-2. parts and donor inventory
-3. deeper build dependency graphs
-4. garage / tool / labour costing
-5. price history and saved searches
-6. community compatibility facts
-7. watchlists and notifications
+1. deeper vehicle / drivetrain / donor compatibility graphs
+2. fitment-aware parts selection instead of keyword relevance alone
+3. direct forum feeds / Discourse / XenForo adapters where communities permit them
+4. richer auction fee, transport, import and title-cost models
+5. saved searches, background refresh and notifications
+6. community compatibility facts with provenance
+7. regional labour-rate and specialist data
 8. shareable build plans
-9. optional local-LLM reasoning
-10. signed macOS releases
+9. optional local-LLM reasoning over structured facts
+10. signed and notarized macOS releases
 
 See [docs/ROADMAP.md](docs/ROADMAP.md).
 
