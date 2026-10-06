@@ -89,9 +89,10 @@ struct AutopilotView: View {
                     HStack(spacing: 8) {
                         status("AUTOTRADER", true)
                         status("MARKETCHECK", connections.hasMarketCheck)
-                        status("WEB", connections.hasSerpAPI)
+                        status("WEB \(connections.connectedFreeSearchProviderCount)/4", connections.connectedFreeSearchProviderCount > 0)
                         status("APIFY", connections.hasApify)
                         status("EBAY PARTS", connections.hasEBay)
+                        status("YOUTUBE", connections.hasYouTube)
                     }
                 }
 

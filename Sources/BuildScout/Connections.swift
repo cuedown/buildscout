@@ -4,51 +4,47 @@ import Combine
 @MainActor
 final class ConnectionStore: ObservableObject {
     @Published var serpAPIKey = "" {
-        didSet {
-            if serpAPIKey != SecureStore.get("serpapi-key") {
-                SecureStore.set(serpAPIKey, for: "serpapi-key")
-            }
-        }
+        didSet { persistSecret(serpAPIKey, key: "serpapi-key") }
+    }
+
+    @Published var tavilyAPIKey = "" {
+        didSet { persistSecret(tavilyAPIKey, key: "tavily-api-key") }
+    }
+
+    @Published var exaAPIKey = "" {
+        didSet { persistSecret(exaAPIKey, key: "exa-api-key") }
+    }
+
+    @Published var braveAPIKey = "" {
+        didSet { persistSecret(braveAPIKey, key: "brave-search-api-key") }
+    }
+
+    @Published var youtubeAPIKey = "" {
+        didSet { persistSecret(youtubeAPIKey, key: "youtube-data-api-key") }
+    }
+
+    @Published var githubToken = "" {
+        didSet { persistSecret(githubToken, key: "github-token") }
     }
 
     @Published var eBayClientID = "" {
-        didSet {
-            if eBayClientID != SecureStore.get("ebay-client-id") {
-                SecureStore.set(eBayClientID, for: "ebay-client-id")
-            }
-        }
+        didSet { persistSecret(eBayClientID, key: "ebay-client-id") }
     }
 
     @Published var eBayClientSecret = "" {
-        didSet {
-            if eBayClientSecret != SecureStore.get("ebay-client-secret") {
-                SecureStore.set(eBayClientSecret, for: "ebay-client-secret")
-            }
-        }
+        didSet { persistSecret(eBayClientSecret, key: "ebay-client-secret") }
     }
 
     @Published var marketCheckAPIKey = "" {
-        didSet {
-            if marketCheckAPIKey != SecureStore.get("marketcheck-api-key") {
-                SecureStore.set(marketCheckAPIKey, for: "marketcheck-api-key")
-            }
-        }
+        didSet { persistSecret(marketCheckAPIKey, key: "marketcheck-api-key") }
     }
 
     @Published var carsXEAPIKey = "" {
-        didSet {
-            if carsXEAPIKey != SecureStore.get("carsxe-api-key") {
-                SecureStore.set(carsXEAPIKey, for: "carsxe-api-key")
-            }
-        }
+        didSet { persistSecret(carsXEAPIKey, key: "carsxe-api-key") }
     }
 
     @Published var apifyToken = "" {
-        didSet {
-            if apifyToken != SecureStore.get("apify-token") {
-                SecureStore.set(apifyToken, for: "apify-token")
-            }
-        }
+        didSet { persistSecret(apifyToken, key: "apify-token") }
     }
 
     @Published var enableApifyFacebook = false
@@ -62,6 +58,11 @@ final class ConnectionStore: ObservableObject {
 
     init() {
         serpAPIKey = SecureStore.get("serpapi-key")
+        tavilyAPIKey = SecureStore.get("tavily-api-key")
+        exaAPIKey = SecureStore.get("exa-api-key")
+        braveAPIKey = SecureStore.get("brave-search-api-key")
+        youtubeAPIKey = SecureStore.get("youtube-data-api-key")
+        githubToken = SecureStore.get("github-token")
         eBayClientID = SecureStore.get("ebay-client-id")
         eBayClientSecret = SecureStore.get("ebay-client-secret")
         marketCheckAPIKey = SecureStore.get("marketcheck-api-key")
@@ -69,19 +70,37 @@ final class ConnectionStore: ObservableObject {
         apifyToken = SecureStore.get("apify-token")
     }
 
-    var hasSerpAPI: Bool { !serpAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+    var hasSerpAPI: Bool { has(serpAPIKey) }
+    var hasTavily: Bool { has(tavilyAPIKey) }
+    var hasExa: Bool { has(exaAPIKey) }
+    var hasBrave: Bool { has(braveAPIKey) }
+    var hasYouTube: Bool { has(youtubeAPIKey) }
+    var hasGitHub: Bool { has(githubToken) }
+
     var hasEBay: Bool {
-        !eBayClientID.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !eBayClientSecret.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        has(eBayClientID) && has(eBayClientSecret)
     }
-    var hasMarketCheck: Bool {
-        !marketCheckAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+
+    var hasMarketCheck: Bool { has(marketCheckAPIKey) }
+    var hasCarsXE: Bool { has(carsXEAPIKey) }
+    var hasApify: Bool { has(apifyToken) }
+
+    var connectedFreeSearchProviderCount: Int {
+        [hasSerpAPI, hasTavily, hasExa, hasBrave].filter { $0 }.count
     }
-    var hasCarsXE: Bool {
-        !carsXEAPIKey.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+
+    var hasAnyWebSearch: Bool {
+        hasSerpAPI || hasTavily || hasExa || hasBrave
     }
-    var hasApify: Bool {
-        !apifyToken.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+
+    private func has(_ value: String) -> Bool {
+        !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private func persistSecret(_ value: String, key: String) {
+        if value != SecureStore.get(key) {
+            SecureStore.set(value, for: key)
+        }
     }
 }
 

@@ -16,47 +16,118 @@ enum BuildResearchEngine {
         mission: MissionProfile,
         connections: ConnectionStore
     ) async -> BuildResearchPack {
-        guard connections.hasSerpAPI else {
-            return BuildResearchPack(listing: listing, guides: [], forumThreads: [], services: [])
-        }
-
-        let key = connections.serpAPIKey
         let region = connections.preferredRegion
         let vehicle = "\(listing.year) \(listing.make) \(listing.model)"
+        let guide = guideQuery(vehicle: vehicle, mission: mission.type)
+        let forum = forumQuery(vehicle: vehicle, mission: mission.type)
 
-        async let guides = SerpAPIClient.youtubeSearch(
-            query: guideQuery(vehicle: vehicle, mission: mission.type),
-            apiKey: key
-        )
-
-        async let forums = SerpAPIClient.googleSearch(
-            query: forumQuery(vehicle: vehicle, mission: mission.type),
-            location: region,
-            apiKey: key,
-            kind: .guide
-        )
-
+        var guides: [HuntResult] = []
+        var forums: [HuntResult] = []
         var services: [HuntResult] = []
-        await withTaskGroup(of: [HuntResult].self) { group in
-            for query in serviceQueries(mission: mission.type) {
-                group.addTask {
-                    (try? await SerpAPIClient.mapsSearch(
-                        query: query,
-                        location: region,
-                        apiKey: key
-                    )) ?? []
+
+        if connections.hasYouTube {
+            let direct = try? await YouTubeDataClient.search(
+                query: guide,
+                apiKey: connections.youtubeAPIKey,
+                maxResults: 20
+            )
+            guides.append(contentsOf: direct ?? [])
+        }
+
+        if connections.hasSerpAPI {
+            let serpKey = connections.serpAPIKey
+
+            if !connections.hasYouTube {
+                let serpGuides = try? await SerpAPIClient.youtubeSearch(
+                    query: guide,
+                    apiKey: serpKey
+                )
+                guides.append(contentsOf: serpGuides ?? [])
+            }
+
+            let serpForums = try? await SerpAPIClient.googleSearch(
+                query: forum,
+                location: region,
+                apiKey: serpKey,
+                kind: .guide
+            )
+            forums.append(contentsOf: serpForums ?? [])
+
+            let hasAlternateWeb = connections.hasTavily || connections.hasExa || connections.hasBrave
+            let serviceLimit = hasAlternateWeb ? 1 : 3
+
+            await withTaskGroup(of: [HuntResult].self) { group in
+                for query in serviceQueries(mission: mission.type).prefix(serviceLimit) {
+                    group.addTask {
+                        (try? await SerpAPIClient.mapsSearch(
+                            query: query,
+                            location: region,
+                            apiKey: serpKey
+                        )) ?? []
+                    }
+                }
+
+                for await batch in group {
+                    services.append(contentsOf: batch)
                 }
             }
+        }
 
-            for await batch in group {
-                services.append(contentsOf: batch)
+        let github = try? await GitHubSearchClient.repositories(
+            query: "\(vehicle) \(mission.type.rawValue.lowercased()) build OR swap",
+            token: connections.hasGitHub ? connections.githubToken : nil
+        )
+        forums.append(contentsOf: github ?? [])
+
+        if connections.hasTavily || connections.hasExa || connections.hasBrave {
+            let forumRequest = HuntRequest(
+                mission: mission.type,
+                keywords: [forum],
+                location: region,
+                maxVehiclePrice: mission.vehicleBudget,
+                preferredVehicle: listing,
+                radiusKM: mission.radiusKM,
+                allowNonRunner: mission.allowNonRunner,
+                allowTow: mission.allowTow,
+                allowTransmissionSwap: mission.allowTransmissionSwap,
+                preferredDrivetrain: mission.preferredDrivetrain
+            )
+            let freeForums = await FreeWebDiscovery.search(
+                request: forumRequest,
+                connections: connections,
+                kind: .guide
+            )
+            forums.append(contentsOf: freeForums)
+
+            if !connections.hasYouTube && !connections.hasSerpAPI {
+                var guideRequest = forumRequest
+                guideRequest.keywords = ["site:youtube.com \(guide)"]
+                let freeGuides = await FreeWebDiscovery.search(
+                    request: guideRequest,
+                    connections: connections,
+                    kind: .guide
+                )
+                guides.append(contentsOf: freeGuides)
             }
+
+            var serviceRequest = forumRequest
+            let serviceText = serviceQueries(mission: mission.type)
+                .prefix(3)
+                .map { "\($0) \(region)" }
+                .joined(separator: " OR ")
+            serviceRequest.keywords = [serviceText]
+            let freeServices = await FreeWebDiscovery.search(
+                request: serviceRequest,
+                connections: connections,
+                kind: .service
+            )
+            services.append(contentsOf: freeServices)
         }
 
         return BuildResearchPack(
             listing: listing,
-            guides: (try? await guides) ?? [],
-            forumThreads: (try? await forums) ?? [],
+            guides: dedupe(guides),
+            forumThreads: dedupe(forums),
             services: dedupe(services)
         )
     }

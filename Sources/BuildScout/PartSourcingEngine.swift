@@ -70,19 +70,23 @@ enum PartSourcingEngine {
                         )) ?? []
                     }
 
-                    group.addTask {
-                        (try? await SerpAPIClient.ebaySearch(
-                            query: task.query,
-                            apiKey: serpKey
-                        )) ?? []
+                    if !connections.hasEBay {
+                        group.addTask {
+                            (try? await SerpAPIClient.ebaySearch(
+                                query: task.query,
+                                apiKey: serpKey
+                            )) ?? []
+                        }
                     }
 
-                    group.addTask {
-                        await ForumFederation.searchParts(
-                            listing: listing,
-                            task: task,
-                            connections: connections
-                        )
+                    if !connections.hasTavily && !connections.hasExa && !connections.hasBrave {
+                        group.addTask {
+                            await ForumFederation.searchParts(
+                                listing: listing,
+                                task: task,
+                                connections: connections
+                            )
+                        }
                     }
                 }
 
@@ -103,6 +107,29 @@ enum PartSourcingEngine {
                     options.append(contentsOf: batch)
                 }
             }
+
+            if options.count < 3 && (connections.hasTavily || connections.hasExa || connections.hasBrave) {
+                let fallbackRequest = HuntRequest(
+                    mission: mission.type,
+                    keywords: [task.query],
+                    location: connections.preferredRegion,
+                    maxVehiclePrice: max(task.fallbackEstimate * 2.5, 500),
+                    preferredVehicle: listing,
+                    radiusKM: mission.radiusKM,
+                    allowNonRunner: mission.allowNonRunner,
+                    allowTow: mission.allowTow,
+                    allowTransmissionSwap: mission.allowTransmissionSwap,
+                    preferredDrivetrain: mission.preferredDrivetrain
+                )
+                let webFallback = await FreeWebDiscovery.search(
+                    request: fallbackRequest,
+                    connections: connections,
+                    kind: .part
+                )
+                options.append(contentsOf: webFallback)
+            }
+
+            options = await BankOfCanadaFXClient.shared.normalizeToCAD(options)
 
             lines.append(
                 SourcedPartLine(

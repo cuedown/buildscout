@@ -78,6 +78,17 @@ enum ProviderCatalog {
             documentationURL: URL(string: "https://www.fueleconomy.gov/feg/ws/index.shtml")
         ),
         .init(
+            id: "bank-of-canada-fx",
+            name: "Bank of Canada Valet API",
+            tier: .live,
+            category: "Currency",
+            capabilities: ["daily FX", "USD to CAD normalization", "official Canadian rates"],
+            auth: "None",
+            endpoint: "bankofcanada.ca/valet",
+            notes: "No registration or key. BuildScout caches the daily rate and normalizes USD parts prices into CAD.",
+            documentationURL: URL(string: "https://www.bankofcanada.ca/valet-api-how-to/")
+        ),
+        .init(
             id: "serp-google",
             name: "SerpApi • Google",
             tier: .optional,
@@ -131,6 +142,61 @@ enum ProviderCatalog {
             endpoint: "serpapi.com/search.json?engine=google_maps",
             notes: "Feeds local help around the build location.",
             documentationURL: URL(string: "https://serpapi.com/google-maps-api")
+        ),
+        .init(
+            id: "tavily",
+            name: "Tavily Search API",
+            tier: .optional,
+            category: "Market discovery",
+            capabilities: ["live web search", "listing discovery", "forums", "parts fallback"],
+            auth: "Free API key",
+            endpoint: "api.tavily.com/search",
+            notes: "$0 Researcher tier includes 1,000 API credits per month with no credit card required.",
+            documentationURL: URL(string: "https://docs.tavily.com/documentation/api-reference/endpoint/search")
+        ),
+        .init(
+            id: "exa",
+            name: "Exa Search API",
+            tier: .optional,
+            category: "Market discovery / research",
+            capabilities: ["semantic web search", "highlights", "obscure listing discovery", "technical research"],
+            auth: "Free API key",
+            endpoint: "api.exa.ai/search",
+            notes: "$0 Starter tier currently includes monthly free credits plus an onboarding bonus.",
+            documentationURL: URL(string: "https://exa.ai/docs/reference/search")
+        ),
+        .init(
+            id: "brave-search",
+            name: "Brave Search API",
+            tier: .optional,
+            category: "Market discovery",
+            capabilities: ["independent web index", "listing discovery", "research fallback"],
+            auth: "API key",
+            endpoint: "api.search.brave.com/res/v1/web/search",
+            notes: "$5 monthly free credit covers roughly 1,000 Search requests at current pricing; card verification is required but prepaid balance can be set to $0.",
+            documentationURL: URL(string: "https://api-dashboard.search.brave.com/documentation")
+        ),
+        .init(
+            id: "youtube-data",
+            name: "YouTube Data API",
+            tier: .optional,
+            category: "Research",
+            capabilities: ["build guides", "repair videos", "swap walkthroughs", "motorsport research"],
+            auth: "Google API key",
+            endpoint: "googleapis.com/youtube/v3/search",
+            notes: "Direct YouTube research path that preserves SerpApi quota; Google projects receive a default free quota allocation.",
+            documentationURL: URL(string: "https://developers.google.com/youtube/v3/docs/search/list")
+        ),
+        .init(
+            id: "github-rest",
+            name: "GitHub REST API",
+            tier: .optional,
+            category: "Research",
+            capabilities: ["open-source build tools", "datasets", "swap documentation", "project repositories"],
+            auth: "Optional free token",
+            endpoint: "api.github.com/search/repositories",
+            notes: "Public requests work without authentication; a free token raises the normal authenticated REST limit substantially.",
+            documentationURL: URL(string: "https://docs.github.com/en/rest")
         ),
         .init(
             id: "ebay-browse",

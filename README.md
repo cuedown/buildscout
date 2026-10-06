@@ -25,7 +25,7 @@ A cheap shell is not automatically a cheap build. BuildScout tries to expose tha
 - Garage skill/tool profile that changes build estimates
 - Hunter workspace with live multi-provider discovery
 - Build Scout: one-button fresh mission → live hunt → normalize → hard-filter → rank → fully source top build paths → champion
-- Built-in zero-key AutoTrader Canada live discovery, including pagination through the current local used-inventory search
+- Built-in AutoTrader Canada live discovery as a baseline source, plus a maximum-free-API strategy across SerpApi, Tavily, Exa, Brave, MarketCheck, eBay, YouTube, Apify and public government data
 - Saved candidates are intentionally isolated from fresh discovery so old searches cannot contaminate a new mission
 - No preloaded demo vehicles: a clean install starts with an empty Candidate library
 - Live NHTSA vPIC VIN decoding with one-click candidate creation
@@ -91,6 +91,8 @@ Everything remains editable before you add the candidate.
 Bulk JSON and CSV imports are also supported. The flexible importer can normalize common exports from external automotive collectors rather than requiring an exact BuildScout schema. See [docs/DATA_FORMAT.md](docs/DATA_FORMAT.md).
 
 For the current provider matrix and federation strategy, see [docs/SOURCES.md](docs/SOURCES.md).
+
+For the current zero-dollar credential plan and quotas, see [docs/FREE_API_STACK.md](docs/FREE_API_STACK.md).
 
 ## Data-source philosophy
 

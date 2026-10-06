@@ -107,7 +107,7 @@ struct HunterView: View {
                 HStack(spacing: 10) {
                     providerPill("AUTOTRADER", on: true)
                     providerPill("MARKETCHECK", on: connections.hasMarketCheck)
-                    providerPill("SERPAPI", on: connections.hasSerpAPI)
+                    providerPill("WEB \(connections.connectedFreeSearchProviderCount)/4", on: connections.connectedFreeSearchProviderCount > 0)
                     providerPill("APIFY", on: connections.hasApify)
 
                     Spacer()
@@ -303,7 +303,10 @@ struct HunterView: View {
     private var liveProviderSummary: String {
         var active: [String] = ["AutoTrader Canada public live inventory"]
         if connections.hasMarketCheck { active.append("MarketCheck dealer + private inventory") }
-        if connections.hasSerpAPI { active.append("web indexes + forums + Shopping via SerpApi") }
+        if connections.hasSerpAPI { active.append("SerpApi") }
+        if connections.hasTavily { active.append("Tavily") }
+        if connections.hasExa { active.append("Exa") }
+        if connections.hasBrave { active.append("Brave Search") }
         if connections.hasApify { active.append("opt-in marketplace / salvage actors") }
         if connections.hasEBay { active.append("native eBay Browse parts") }
         return active.joined(separator: " + ")

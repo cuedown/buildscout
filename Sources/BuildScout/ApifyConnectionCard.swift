@@ -15,7 +15,7 @@ struct ApifyConnectionCard: View {
                             .foregroundStyle(BuildScoutTheme.muted)
                     }
                     Spacer()
-                    Text(connections.hasApify ? "CONNECTED" : "OPTIONAL TOKEN")
+                    Text(connections.hasApify ? "CONNECTED" : "FREE $5/MO")
                         .font(.system(size: 9, weight: .black, design: .rounded))
                         .tracking(0.8)
                         .foregroundStyle(connections.hasApify ? BuildScoutTheme.success : BuildScoutTheme.warning)
@@ -35,7 +35,7 @@ struct ApifyConnectionCard: View {
                     .background(BuildScoutTheme.background, in: RoundedRectangle(cornerRadius: 9))
                     .overlay(RoundedRectangle(cornerRadius: 9).stroke(BuildScoutTheme.border))
 
-                Text("Runs are opt-in because actors can consume credits. Credentials stay in macOS Keychain.")
+                Text("Free plan includes $5 of platform/Actor usage every month with no credit card required. Runs remain opt-in because individual Store actors can have their own pricing. Credentials stay in macOS Keychain.")
                     .font(.caption)
                     .foregroundStyle(BuildScoutTheme.faint)
 
@@ -63,8 +63,8 @@ struct ApifyConnectionCard: View {
                     Spacer()
 
                     Link(
-                        "Apify Console",
-                        destination: URL(string: "https://console.apify.com/")!
+                        "Get free Apify token",
+                        destination: URL(string: "https://console.apify.com/account/integrations")!
                     )
                     .font(.caption.bold())
                 }

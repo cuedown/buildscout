@@ -74,16 +74,47 @@ enum HuntEngine {
             results.append(contentsOf: actorResults)
         }
 
+        if connections.hasTavily || connections.hasExa || connections.hasBrave {
+            let freeWeb = await FreeWebDiscovery.search(
+                request: request,
+                connections: connections,
+                kind: .vehicle
+            )
+            results.append(contentsOf: freeWeb)
+
+            var indexedMarketRequest = request
+            indexedMarketRequest.keywords = [Self.indexedMarketplaceQuery(for: request)]
+            let indexedMarket = await FreeWebDiscovery.search(
+                request: indexedMarketRequest,
+                connections: connections,
+                kind: .vehicle
+            )
+            results.append(contentsOf: indexedMarket)
+
+            var auctionRequest = request
+            auctionRequest.keywords = [Self.auctionDomainQuery(for: request)]
+            let freeAuctions = await FreeWebDiscovery.search(
+                request: auctionRequest,
+                connections: connections,
+                kind: .auction
+            )
+            results.append(contentsOf: freeAuctions)
+        }
+
         if connections.hasSerpAPI {
+            let serpKey = connections.serpAPIKey
+            let hasAlternateWeb = connections.hasTavily || connections.hasExa || connections.hasBrave
+            let serpQueryLimit = hasAlternateWeb ? 2 : 4
+
             await withTaskGroup(of: [HuntResult].self) { group in
-                let queries = Array(request.keywords.prefix(10))
+                let queries = Array(request.keywords.prefix(serpQueryLimit))
 
                 for query in queries {
                     group.addTask {
                         (try? await SerpAPIClient.googleSearch(
                             query: query,
                             location: request.location,
-                            apiKey: connections.serpAPIKey,
+                            apiKey: serpKey,
                             kind: .vehicle
                         )) ?? []
                     }
@@ -94,7 +125,7 @@ enum HuntEngine {
                     return (try? await SerpAPIClient.googleSearch(
                         query: auctionQuery,
                         location: request.location,
-                        apiKey: connections.serpAPIKey,
+                        apiKey: serpKey,
                         kind: .auction
                     )) ?? []
                 }
@@ -105,14 +136,14 @@ enum HuntEngine {
                         (try? await SerpAPIClient.shoppingSearch(
                             query: partsQuery,
                             location: request.location,
-                            apiKey: connections.serpAPIKey
+                            apiKey: serpKey
                         )) ?? []
                     }
 
                     group.addTask {
                         (try? await SerpAPIClient.ebaySearch(
                             query: partsQuery,
-                            apiKey: connections.serpAPIKey
+                            apiKey: serpKey
                         )) ?? []
                     }
                 }
@@ -122,17 +153,19 @@ enum HuntEngine {
                 }
             }
 
-            let federated = await FederatedDiscovery.search(
-                request: request,
-                connections: connections
-            )
-            results.append(contentsOf: federated)
+            if !(connections.hasTavily || connections.hasExa || connections.hasBrave) {
+                let federated = await FederatedDiscovery.search(
+                    request: request,
+                    connections: connections
+                )
+                results.append(contentsOf: federated)
 
-            let forumVehicles = await ForumFederation.searchVehicles(
-                request: request,
-                connections: connections
-            )
-            results.append(contentsOf: forumVehicles)
+                let forumVehicles = await ForumFederation.searchVehicles(
+                    request: request,
+                    connections: connections
+                )
+                results.append(contentsOf: forumVehicles)
+            }
         }
 
         if connections.hasEBay, let vehicle = request.preferredVehicle {
@@ -170,6 +203,11 @@ enum HuntEngine {
             for: profile,
             location: location
         )
+    }
+
+    private static func indexedMarketplaceQuery(for request: HuntRequest) -> String {
+        let base = request.keywords.first ?? "project car \(request.location)"
+        return "\(base) (site:kijiji.ca OR site:kijijiautos.ca OR site:facebook.com/marketplace OR site:autotrader.ca OR site:autotempest.com OR site:theparking.ca OR site:classic.com)"
     }
 
     private static func auctionDomainQuery(for request: HuntRequest) -> String {
