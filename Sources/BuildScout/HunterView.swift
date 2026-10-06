@@ -101,19 +101,14 @@ struct HunterView: View {
                         .tracking(0.6)
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(
-                        isHunting ||
-                        (!connections.hasMarketCheck &&
-                         !connections.hasSerpAPI &&
-                         !connections.hasApify)
-                    )
+                    .disabled(isHunting)
                 }
 
                 HStack(spacing: 10) {
+                    providerPill("AUTOTRADER", on: true)
                     providerPill("MARKETCHECK", on: connections.hasMarketCheck)
                     providerPill("SERPAPI", on: connections.hasSerpAPI)
                     providerPill("APIFY", on: connections.hasApify)
-                    providerPill("EBAY PARTS", on: connections.hasEBay)
 
                     Spacer()
 
@@ -124,11 +119,11 @@ struct HunterView: View {
 
                 if !connections.hasMarketCheck && !connections.hasSerpAPI && !connections.hasApify {
                     Label(
-                        "Connect MarketCheck, SerpApi, or an enabled Apify marketplace source under Connections to run live vehicle discovery.",
-                        systemImage: "key.fill"
+                        "Built-in AutoTrader discovery is active. Optional connections widen the live source pool.",
+                        systemImage: "checkmark.circle.fill"
                     )
                     .font(.caption)
-                    .foregroundStyle(BuildScoutTheme.warning)
+                    .foregroundStyle(BuildScoutTheme.success)
                 }
 
                 if let huntError {
@@ -306,12 +301,12 @@ struct HunterView: View {
     }
 
     private var liveProviderSummary: String {
-        var active: [String] = []
+        var active: [String] = ["AutoTrader Canada public live inventory"]
         if connections.hasMarketCheck { active.append("MarketCheck dealer + private inventory") }
         if connections.hasSerpAPI { active.append("web indexes + forums + Shopping via SerpApi") }
         if connections.hasApify { active.append("opt-in marketplace / salvage actors") }
-        if connections.hasEBay { active.append("native eBay Browse") }
-        return active.isEmpty ? "No keyed live-search provider connected yet." : active.joined(separator: " + ")
+        if connections.hasEBay { active.append("native eBay Browse parts") }
+        return active.joined(separator: " + ")
     }
 
     private func runHunt() {
@@ -336,11 +331,22 @@ struct HunterView: View {
 
         Task {
             let results = await HuntEngine.run(request: request, connections: connections)
+            let filtered = results.filter { result in
+                guard result.kind == .vehicle || result.kind == .auction else { return true }
+                let listing = HuntNormalization.vehicleListing(
+                    from: result,
+                    defaultLocation: connections.preferredRegion
+                )
+                return MissionCandidateValidator.allows(listing, mission: store.mission)
+            }
+
             await MainActor.run {
-                liveResults = results
+                liveResults = filtered
                 isHunting = false
-                if results.isEmpty {
-                    huntError = "The connected providers returned no results for this hunt."
+                if filtered.isEmpty {
+                    huntError = results.isEmpty
+                        ? "The connected providers returned no results for this hunt."
+                        : "Results were returned, but none passed the current mission sanity filters."
                 }
             }
         }

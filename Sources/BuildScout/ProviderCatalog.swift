@@ -256,12 +256,12 @@ enum ProviderCatalog {
         .init(
             id: "autotrader",
             name: "AutoTrader Canada",
-            tier: .directory,
+            tier: .live,
             category: "Classifieds",
-            capabilities: ["market comps", "dealer/private inventory"],
-            auth: "Website / partner feeds",
-            endpoint: nil,
-            notes: "Useful market-comp source; BuildScout does not assume a public inventory API.",
+            capabilities: ["fresh used inventory", "dealer/private listings", "price", "kilometres", "location", "listing description"],
+            auth: "None for public search pages",
+            endpoint: "autotrader.ca/cars",
+            notes: "Built-in user-triggered public search adapter. Reads the structured data already served with AutoTrader search-result pages; no account/session bypass.",
             documentationURL: URL(string: "https://www.autotrader.ca/")
         ),
         .init(

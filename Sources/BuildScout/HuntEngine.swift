@@ -50,6 +50,11 @@ enum HuntEngine {
     ) async -> [HuntResult] {
         var results: [HuntResult] = []
 
+        let nativeAutoTrader = await AutoTraderPublicClient.search(
+            request: request
+        )
+        results.append(contentsOf: nativeAutoTrader)
+
         if connections.hasMarketCheck {
             if let market = try? await MarketCheckClient.searchInventory(
                 apiKey: connections.marketCheckAPIKey,

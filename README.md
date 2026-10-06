@@ -25,6 +25,7 @@ A cheap shell is not automatically a cheap build. BuildScout tries to expose tha
 - Garage skill/tool profile that changes build estimates
 - Hunter workspace with live multi-provider discovery
 - Build Scout: one-button fresh mission → live hunt → normalize → hard-filter → rank → fully source top build paths → champion
+- Built-in zero-key AutoTrader Canada live discovery, including pagination through the current local used-inventory search
 - Saved candidates are intentionally isolated from fresh discovery so old searches cannot contaminate a new mission
 - No preloaded demo vehicles: a clean install starts with an empty Candidate library
 - Live NHTSA vPIC VIN decoding with one-click candidate creation

@@ -48,6 +48,11 @@ struct AutopilotView: View {
                 selectedCandidateID = store.selectedEvaluation?.listing.id ?? store.listings.first?.id
             }
         }
+        .onChange(of: store.mission.type) { _, newType in
+            if newType == .drift {
+                store.mission.preferredDrivetrain = .rwd
+            }
+        }
     }
 
     private var header: some View {
@@ -82,6 +87,7 @@ struct AutopilotView: View {
                     ScoutEyebrow(text: "Fresh build mission")
                     Spacer()
                     HStack(spacing: 8) {
+                        status("AUTOTRADER", true)
                         status("MARKETCHECK", connections.hasMarketCheck)
                         status("WEB", connections.hasSerpAPI)
                         status("APIFY", connections.hasApify)
@@ -175,22 +181,16 @@ struct AutopilotView: View {
                     }
                     .controlSize(.large)
                     .buttonStyle(.borderedProminent)
-                    .disabled(
-                        discovering ||
-                        running ||
-                        (!connections.hasMarketCheck &&
-                         !connections.hasSerpAPI &&
-                         !connections.hasApify)
-                    )
+                    .disabled(discovering || running)
                 }
 
                 if !connections.hasMarketCheck && !connections.hasSerpAPI && !connections.hasApify {
                     Label(
-                        "Connect MarketCheck, SerpApi, or an enabled Apify marketplace source in Connections. Build Scout will not pretend stale local examples are live inventory.",
-                        systemImage: "antenna.radiowaves.left.and.right.slash"
+                        "Native AutoTrader discovery is active now. Connect MarketCheck, SerpApi, or Apify only to widen coverage beyond the built-in live source.",
+                        systemImage: "antenna.radiowaves.left.and.right"
                     )
                     .font(.caption)
-                    .foregroundStyle(BuildScoutTheme.warning)
+                    .foregroundStyle(BuildScoutTheme.muted)
                 }
 
                 if !store.listings.isEmpty {
@@ -242,7 +242,7 @@ struct AutopilotView: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
                         ScoutEyebrow(text: "Fresh market run")
-                        Text("\(missionReport.rawLeadCount) RAW LEADS → \(missionReport.candidateCount) CANDIDATES → \(missionReport.finalists.count) A→Z FINALISTS")
+                        Text("\(missionReport.rawLeadCount) RAW LEADS → \(missionReport.rejectedCandidateCount) REJECTED → \(missionReport.candidateCount) VIABLE → \(missionReport.finalists.count) A→Z FINALISTS")
                             .font(.system(size: 13, weight: .black, design: .rounded))
                             .tracking(0.3)
                     }
@@ -259,6 +259,15 @@ struct AutopilotView: View {
                         .font(.caption)
                         .foregroundStyle(BuildScoutTheme.warning)
                 } else {
+                    if missionReport.finalists.isEmpty {
+                        Label(
+                            "No candidate is verified strongly enough for an A→Z recommendation yet. BuildScout will not promote an unverified drivetrain or an obviously wrong body type just because it is cheap.",
+                            systemImage: "exclamationmark.shield.fill"
+                        )
+                        .font(.caption)
+                        .foregroundStyle(BuildScoutTheme.warning)
+                    }
+
                     if !missionReport.finalists.isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             ScoutEyebrow(text: "A → Z build paths")

@@ -7,6 +7,7 @@ struct MissionAutopilotReport: Identifiable {
     let rankedCandidates: [BuildEvaluation]
     let finalists: [AutopilotReport]
     let champion: AutopilotReport?
+    let rejectedCandidateCount: Int
     let generatedAt = Date()
 
     var candidateCount: Int { discoveredCandidates.count }
@@ -41,12 +42,13 @@ enum MissionAutopilotEngine {
             connections: connections
         )
 
-        let candidates = HuntNormalization.vehicles(
+        let normalized = HuntNormalization.vehicles(
             from: hunted,
             defaultLocation: connections.preferredRegion
         )
-        .filter { listing in
-            missionAllows(listing, mission: mission)
+
+        let candidates = normalized.filter {
+            MissionCandidateValidator.allows($0, mission: mission)
         }
 
         let ranked = candidates
@@ -78,40 +80,9 @@ enum MissionAutopilotEngine {
             discoveredCandidates: candidates,
             rankedCandidates: ranked,
             finalists: finalistReports,
-            champion: finalistReports.first
+            champion: finalistReports.first,
+            rejectedCandidateCount: max(0, normalized.count - candidates.count)
         )
-    }
-
-    private static func missionAllows(
-        _ listing: VehicleListing,
-        mission: MissionProfile
-    ) -> Bool {
-        if listing.price > 0, listing.price > mission.vehicleBudget * 1.15 {
-            return false
-        }
-
-        if !mission.allowNonRunner, !listing.runs {
-            return false
-        }
-
-        if !mission.allowTow, listing.towRequired {
-            return false
-        }
-
-        if mission.preferredDrivetrain != .unknown,
-           listing.drivetrain != .unknown,
-           listing.drivetrain != mission.preferredDrivetrain {
-            return false
-        }
-
-        if mission.type == .drift,
-           !mission.allowTransmissionSwap,
-           listing.transmission != .unknown,
-           listing.transmission != .manual {
-            return false
-        }
-
-        return true
     }
 
     private static func betterBuildPath(
