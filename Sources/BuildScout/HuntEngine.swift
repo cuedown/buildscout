@@ -35,6 +35,11 @@ struct HuntRequest {
     var location: String
     var maxVehiclePrice: Double
     var preferredVehicle: VehicleListing?
+    var radiusKM: Double = 300
+    var allowNonRunner: Bool = true
+    var allowTow: Bool = true
+    var allowTransmissionSwap: Bool = true
+    var preferredDrivetrain: Drivetrain = .unknown
 }
 
 enum HuntEngine {
@@ -66,7 +71,7 @@ enum HuntEngine {
 
         if connections.hasSerpAPI {
             await withTaskGroup(of: [HuntResult].self) { group in
-                let queries = Array(request.keywords.prefix(5))
+                let queries = Array(request.keywords.prefix(10))
 
                 for query in queries {
                     group.addTask {
@@ -145,70 +150,31 @@ enum HuntEngine {
         budget: Double,
         location: String = "Alberta"
     ) -> [String] {
-        let budgetText = Int(budget)
-        let region = location.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "Canada" : location
+        HuntQueryPlanner.legacyQueries(
+            for: mission,
+            budget: budget,
+            location: location
+        )
+    }
 
-        switch mission {
-        case .drift:
-            return [
-                "RWD manual project car under $\(budgetText) \(region)",
-                "non running BMW RWD project \(region)",
-                "engine failure manual RWD project \(region)",
-                "350Z G35 project \(region)",
-                "Mustang manual project \(region)"
-            ]
-        case .overland:
-            return [
-                "4x4 project SUV under $\(budgetText) \(region)",
-                "AWD wagon project \(region)",
-                "fleet 4WD auction \(region)",
-                "high mileage 4x4 mechanic special \(region)"
-            ]
-        case .camper:
-            return [
-                "cargo van project under $\(budgetText) \(region)",
-                "fleet van auction \(region)",
-                "wagon camper project \(region)",
-                "minivan mechanic special \(region)"
-            ]
-        case .rally:
-            return [
-                "AWD manual project car \(region)",
-                "Subaru project \(region)",
-                "rally car shell \(region)",
-                "winter beater manual auction \(region)"
-            ]
-        case .track:
-            return [
-                "manual coupe project \(region)",
-                "track car project \(region)",
-                "roller chassis \(region)",
-                "sports car needs engine \(region)"
-            ]
-        case .winter:
-            return [
-                "AWD winter beater \(region)",
-                "4x4 mechanic special \(region)",
-                "old Subaru manual \(region)",
-                "fleet AWD auction \(region)"
-            ]
-        case .custom:
-            return [
-                "project car mechanic special \(region)",
-                "does not run car \(region)",
-                "needs engine car \(region)",
-                "estate vehicle auction \(region)",
-                "lost interest project car \(region)"
-            ]
-        }
+    static func queries(
+        for profile: MissionProfile,
+        location: String
+    ) -> [String] {
+        HuntQueryPlanner.queries(
+            for: profile,
+            location: location
+        )
     }
 
     private static func auctionDomainQuery(for request: HuntRequest) -> String {
-        let base = HuntEngine.queries(
-            for: request.mission,
-            budget: request.maxVehiclePrice,
-            location: request.location
-        ).first ?? "project car \(request.location)"
+        let base = request.keywords.first
+            ?? HuntEngine.queries(
+                for: request.mission,
+                budget: request.maxVehiclePrice,
+                location: request.location
+            ).first
+            ?? "project car \(request.location)"
         return "\(base) (site:copart.ca OR site:iaai.com OR site:teamauctions.com OR site:grahamauctions.com OR site:maauctions.com OR site:govdeals.ca)"
     }
 

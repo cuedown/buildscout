@@ -1,6 +1,7 @@
 import Foundation
 
 struct PersistedState: Codable {
+    var schemaVersion: Int? = 2
     var mission: MissionProfile
     var listings: [VehicleListing]
     var favoriteIDs: Set<UUID>

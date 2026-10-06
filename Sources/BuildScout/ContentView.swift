@@ -2,7 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject private var store: ListingStore
-    @State private var section: SidebarSection = .mission
+    @State private var section: SidebarSection = .autopilot
 
     var body: some View {
         HStack(spacing: 0) {
@@ -152,7 +152,7 @@ struct ContentView: View {
 
 enum SidebarSection: String, CaseIterable, Identifiable {
     case mission = "Mission"
-    case autopilot = "Autopilot"
+    case autopilot = "Build Scout"
     case hunter = "Hunter"
     case vehicleIntel = "Vehicle Intel"
     case candidates = "Candidates"

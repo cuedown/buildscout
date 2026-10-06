@@ -26,14 +26,42 @@ final class ListingStore: ObservableObject {
 
     init() {
         if let state = PersistenceStore.load() {
-            mission = state.mission
-            listings = state.listings
-            favoriteIDs = state.favoriteIDs
+            let legacyState = (state.schemaVersion ?? 0) < 2
+            let cleanedListings = state.listings.filter {
+                $0.source.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .caseInsensitiveCompare("Demo") != .orderedSame
+            }
+            let validListingIDs = Set(cleanedListings.map(\.id))
+            let cleanedFavorites = state.favoriteIDs.intersection(validListingIDs)
+            let cleanedProjects = (state.projects ?? []).filter {
+                $0.vehicle.source.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .caseInsensitiveCompare("Demo") != .orderedSame
+            }
+
+            mission = legacyState ? MissionProfile() : state.mission
+            listings = cleanedListings
+            favoriteIDs = cleanedFavorites
             garage = state.garage ?? .starter
-            projects = state.projects ?? []
+            projects = cleanedProjects
+
+            if legacyState ||
+                cleanedListings.count != state.listings.count ||
+                cleanedFavorites != state.favoriteIDs ||
+                cleanedProjects.count != (state.projects ?? []).count {
+                PersistenceStore.save(
+                    PersistedState(
+                        schemaVersion: 2,
+                        mission: mission,
+                        listings: listings,
+                        favoriteIDs: favoriteIDs,
+                        garage: garage,
+                        projects: projects
+                    )
+                )
+            }
         } else {
             mission = MissionProfile()
-            listings = SeedData.listings
+            listings = []
             favoriteIDs = []
             garage = .starter
             projects = []
@@ -115,14 +143,11 @@ final class ListingStore: ObservableObject {
         projects.removeAll { $0.id == id }
     }
 
-    func resetDemoData() {
+    func resetSearchProfile() {
         mission = MissionProfile()
-        listings = SeedData.listings
-        favoriteIDs = []
-        garage = .starter
-        projects = []
         selectedListingID = nil
         query = ""
+        favoritesOnly = false
     }
 
     private func persist() {

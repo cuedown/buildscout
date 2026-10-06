@@ -80,38 +80,35 @@ enum ApifyAutomotiveSources {
         token: String,
         maxItems: Int
     ) async -> [HuntResult] {
-        var results: [HuntResult] = []
+        let queries = Array(request.keywords.prefix(8))
+        guard !queries.isEmpty else { return [] }
 
-        for query in request.keywords.prefix(3) {
-            let input: [String: Any] = [
-                "searchQueries": [query],
-                "location": request.location,
-                "category": "vehicles",
-                "maxPrice": Int(request.maxVehiclePrice),
-                "maxItems": maxItems,
-                "includeDetails": true
-            ]
+        let input: [String: Any] = [
+            "searchQueries": queries,
+            "location": request.location,
+            "category": "vehicles",
+            "maxPrice": Int(request.maxVehiclePrice),
+            "maxItems": maxItems,
+            "includeDetails": true
+        ]
 
-            guard let rows = try? await ApifyClient.runActor(
-                actorID: facebookActor,
-                token: token,
-                input: input
-            ) else { continue }
+        guard let rows = try? await ApifyClient.runActor(
+            actorID: facebookActor,
+            token: token,
+            input: input
+        ) else { return [] }
 
-            results.append(contentsOf: rows.map {
-                result(
-                    row: $0,
-                    provider: "Apify • Facebook Marketplace",
-                    kind: .vehicle,
-                    preferredURLKeys: ["listing_url", "listingUrl", "url", "listingLink"],
-                    preferredPriceKeys: ["price", "priceAmount", "amount"],
-                    preferredLocationKeys: ["location", "locationText", "city"],
-                    preferredMileageKeys: ["mileage", "vehicleMileage", "odometer"]
-                )
-            })
+        return rows.map {
+            result(
+                row: $0,
+                provider: "Apify • Facebook Marketplace",
+                kind: .vehicle,
+                preferredURLKeys: ["listing_url", "listingUrl", "url", "listingLink"],
+                preferredPriceKeys: ["price", "priceAmount", "amount"],
+                preferredLocationKeys: ["location", "locationText", "city"],
+                preferredMileageKeys: ["mileage", "vehicleMileage", "odometer"]
+            )
         }
-
-        return results
     }
 
     private static func kijiji(
@@ -119,41 +116,40 @@ enum ApifyAutomotiveSources {
         token: String,
         maxItems: Int
     ) async -> [HuntResult] {
-        var results: [HuntResult] = []
-
-        for query in request.keywords.prefix(3) {
-            let pages = max(1, min(5, Int(ceil(Double(maxItems) / 40.0))))
-            let searchURL = kijijiSearchURL(
-                query: query,
-                location: request.location,
-                maxPrice: request.maxVehiclePrice
-            )
-
-            let input: [String: Any] = [
-                "start_urls": [["url": searchURL]],
-                "max_pages": pages
-            ]
-
-            guard let rows = try? await ApifyClient.runActor(
-                actorID: kijijiActor,
-                token: token,
-                input: input
-            ) else { continue }
-
-            results.append(contentsOf: rows.map {
-                result(
-                    row: $0,
-                    provider: "Apify • Kijiji",
-                    kind: .vehicle,
-                    preferredURLKeys: ["kijiji_url", "url", "adUrl", "listingUrl"],
-                    preferredPriceKeys: ["price_amount", "price", "priceValue"],
-                    preferredLocationKeys: ["location_name", "location_address", "location", "address", "city"],
-                    preferredMileageKeys: ["mileage_km", "kilometres", "kilometers", "mileage", "odometer"]
+        let urls = request.keywords.prefix(6).map {
+            [
+                "url": kijijiSearchURL(
+                    query: $0,
+                    location: request.location,
+                    maxPrice: request.maxVehiclePrice
                 )
-            })
+            ]
         }
+        guard !urls.isEmpty else { return [] }
 
-        return results
+        let pages = max(1, min(5, Int(ceil(Double(maxItems) / 40.0))))
+        let input: [String: Any] = [
+            "start_urls": urls,
+            "max_pages": pages
+        ]
+
+        guard let rows = try? await ApifyClient.runActor(
+            actorID: kijijiActor,
+            token: token,
+            input: input
+        ) else { return [] }
+
+        return rows.map {
+            result(
+                row: $0,
+                provider: "Apify • Kijiji",
+                kind: .vehicle,
+                preferredURLKeys: ["kijiji_url", "url", "adUrl", "listingUrl"],
+                preferredPriceKeys: ["price_amount", "price", "priceValue"],
+                preferredLocationKeys: ["location_name", "location_address", "location", "address", "city"],
+                preferredMileageKeys: ["mileage_km", "kilometres", "kilometers", "mileage", "odometer"]
+            )
+        }
     }
 
     private static func craigslist(

@@ -24,7 +24,9 @@ A cheap shell is not automatically a cheap build. BuildScout tries to expose tha
 - Markdown / JSON build export for forum sharing and backups
 - Garage skill/tool profile that changes build estimates
 - Hunter workspace with live multi-provider discovery
-- Autopilot: mission → live hunt → normalize → rank → deep-dive → project
+- Build Scout: one-button fresh mission → live hunt → normalize → hard-filter → rank → fully source top build paths → champion
+- Saved candidates are intentionally isolated from fresh discovery so old searches cannot contaminate a new mission
+- No preloaded demo vehicles: a clean install starts with an empty Candidate library
 - Live NHTSA vPIC VIN decoding with one-click candidate creation
 - NHTSA recall / complaint / safety intelligence
 - FuelEconomy.gov configuration lookup

@@ -109,6 +109,6 @@ actor HuntHistoryStore {
             at: directory,
             withIntermediateDirectories: true
         )
-        return directory.appendingPathComponent("hunt-history.json")
+        return directory.appendingPathComponent("hunt-history-v2.json")
     }
 }

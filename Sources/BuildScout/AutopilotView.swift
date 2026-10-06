@@ -53,20 +53,20 @@ struct AutopilotView: View {
     private var header: some View {
         HStack(alignment: .bottom) {
             VStack(alignment: .leading, spacing: 7) {
-                ScoutEyebrow(text: "Autopilot")
-                Text("TAKE IT FROM A → B.")
+                ScoutEyebrow(text: "Build Scout")
+                Text("BUILD IT FROM THE MARKET.")
                     .font(.system(size: 34, weight: .black, design: .rounded))
                     .tracking(-0.7)
-                Text("One run assembles identity, safety signals, configuration data, live parts, build research, local help, and the finished-cost picture.")
+                Text("Set the mission, pull fresh inventory, rank every normalized candidate, fully source the strongest paths, and pick the easiest A → Z build.")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(BuildScoutTheme.muted)
             }
             Spacer()
 
-            if running {
+            if running || discovering {
                 VStack(alignment: .trailing, spacing: 6) {
                     ProgressView()
-                    Text("BUILDING CASE FILE")
+                    Text(discovering ? "SCOUTING LIVE MARKET" : "BUILDING CASE FILE")
                         .font(.system(size: 9, weight: .black, design: .rounded))
                         .tracking(0.8)
                         .foregroundStyle(BuildScoutTheme.accent)
@@ -77,89 +77,160 @@ struct AutopilotView: View {
 
     private var launchPanel: some View {
         ScoutPanel {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    ScoutEyebrow(text: "Input")
+                    ScoutEyebrow(text: "Fresh build mission")
                     Spacer()
                     HStack(spacing: 8) {
-                        status("PUBLIC DATA", true)
                         status("MARKETCHECK", connections.hasMarketCheck)
                         status("WEB", connections.hasSerpAPI)
                         status("APIFY", connections.hasApify)
-                        status("EBAY", connections.hasEBay)
+                        status("EBAY PARTS", connections.hasEBay)
                     }
                 }
 
-                VStack(spacing: 10) {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("MISSION")
+                            .font(.system(size: 9, weight: .black, design: .rounded))
+                            .tracking(0.7)
+                            .foregroundStyle(BuildScoutTheme.faint)
+                        Picker("Mission", selection: $store.mission.type) {
+                            ForEach(MissionType.allCases) { item in
+                                Label(item.rawValue, systemImage: item.symbol).tag(item)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: 150)
+                    }
+
+                    quickMoneyField("VEHICLE MAX", value: $store.mission.vehicleBudget)
+                    quickMoneyField("ALL-IN MAX", value: $store.mission.totalBudget)
+
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("DRIVETRAIN")
+                            .font(.system(size: 9, weight: .black, design: .rounded))
+                            .tracking(0.7)
+                            .foregroundStyle(BuildScoutTheme.faint)
+                        Picker("Drivetrain", selection: $store.mission.preferredDrivetrain) {
+                            ForEach(Drivetrain.allCases) { drive in
+                                Text(drive.rawValue).tag(drive)
+                            }
+                        }
+                        .labelsHidden()
+                        .frame(width: 110)
+                    }
+
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("RADIUS  \(Int(store.mission.radiusKM)) KM")
+                            .font(.system(size: 9, weight: .black, design: .rounded))
+                            .tracking(0.7)
+                            .foregroundStyle(BuildScoutTheme.faint)
+                        Slider(value: $store.mission.radiusKM, in: 25...1000, step: 25)
+                            .frame(minWidth: 150)
+                    }
+                }
+
+                HStack(spacing: 8) {
+                    missionToggle("NON-RUNNERS", icon: "engine.combustion", value: $store.mission.allowNonRunner)
+                    missionToggle("TOWABLE", icon: "truck.box", value: $store.mission.allowTow)
+                    missionToggle("TRANS SWAPS", icon: "gearshape.2", value: $store.mission.allowTransmissionSwap)
+
+                    Spacer()
+
+                    Text(connections.preferredRegion)
+                        .font(.caption)
+                        .foregroundStyle(BuildScoutTheme.faint)
+                }
+
+                Divider().overlay(BuildScoutTheme.border)
+
+                HStack(alignment: .center, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("LIVE DISCOVERY ONLY")
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .tracking(0.8)
+                            .foregroundStyle(BuildScoutTheme.success)
+                        Text("This run does not inject saved Candidates or old search results. It starts from the mission above and asks the connected live providers again.")
+                            .font(.caption)
+                            .foregroundStyle(BuildScoutTheme.muted)
+                    }
+
+                    Spacer()
+
+                    Button {
+                        discoverAndBuild()
+                    } label: {
+                        HStack(spacing: 9) {
+                            if discovering {
+                                ProgressView().controlSize(.small)
+                            } else {
+                                Image(systemName: "scope")
+                            }
+                            Text(discovering ? "SCOUTING + BUILDING…" : "BUILD SCOUT NOW")
+                        }
+                        .font(.system(size: 11, weight: .black, design: .rounded))
+                        .tracking(0.6)
+                        .padding(.horizontal, 4)
+                    }
+                    .controlSize(.large)
+                    .buttonStyle(.borderedProminent)
+                    .disabled(
+                        discovering ||
+                        running ||
+                        (!connections.hasMarketCheck &&
+                         !connections.hasSerpAPI &&
+                         !connections.hasApify)
+                    )
+                }
+
+                if !connections.hasMarketCheck && !connections.hasSerpAPI && !connections.hasApify {
+                    Label(
+                        "Connect MarketCheck, SerpApi, or an enabled Apify marketplace source in Connections. Build Scout will not pretend stale local examples are live inventory.",
+                        systemImage: "antenna.radiowaves.left.and.right.slash"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(BuildScoutTheme.warning)
+                }
+
+                if !store.listings.isEmpty {
+                    Divider().overlay(BuildScoutTheme.border)
+
                     HStack(spacing: 12) {
-                        Picker("Candidate", selection: Binding(
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("SAVED CANDIDATE DEEP-DIVE")
+                                .font(.system(size: 9, weight: .black, design: .rounded))
+                                .tracking(0.7)
+                            Text("Saved listings stay saved, but they are separate from fresh market discovery.")
+                                .font(.caption)
+                                .foregroundStyle(BuildScoutTheme.faint)
+                        }
+
+                        Spacer()
+
+                        Picker("Saved candidate", selection: Binding(
                             get: { selectedCandidateID ?? store.listings.first?.id },
                             set: {
                                 selectedCandidateID = $0
                                 report = nil
-                                missionReport = nil
                             }
                         )) {
-                            ForEach(store.listings) { listing in
-                                Text(listing.title).tag(Optional(listing.id))
+                            ForEach(store.listings) { saved in
+                                Text(saved.title).tag(Optional(saved.id))
                             }
                         }
                         .labelsHidden()
-                        .frame(maxWidth: .infinity)
+                        .frame(width: 330)
 
                         Button {
                             run()
                         } label: {
-                            HStack(spacing: 8) {
-                                if running {
-                                    ProgressView().controlSize(.small)
-                                } else {
-                                    Image(systemName: "bolt.horizontal.circle.fill")
-                                }
-                                Text(running ? "RUNNING…" : "DEEP-DIVE SAVED CANDIDATE")
-                            }
-                            .font(.system(size: 10, weight: .black, design: .rounded))
-                            .tracking(0.5)
+                            Text(running ? "RUNNING…" : "DEEP-DIVE")
+                                .font(.system(size: 9, weight: .black, design: .rounded))
                         }
                         .buttonStyle(.bordered)
                         .disabled(listing == nil || running || discovering)
                     }
-
-                    HStack {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("START FROM THE MISSION")
-                                .font(.system(size: 9, weight: .black, design: .rounded))
-                                .tracking(0.6)
-                            Text("Hunt live inventory → normalize → rank → deep-dive the best build.")
-                                .font(.caption)
-                                .foregroundStyle(BuildScoutTheme.faint)
-                        }
-                        Spacer()
-
-                        Button {
-                            discoverAndBuild()
-                        } label: {
-                            HStack(spacing: 8) {
-                                if discovering {
-                                    ProgressView().controlSize(.small)
-                                } else {
-                                    Image(systemName: "scope")
-                                }
-                                Text(discovering ? "HUNTING + BUILDING…" : "DISCOVER + BUILD BEST")
-                            }
-                            .font(.system(size: 10, weight: .black, design: .rounded))
-                            .tracking(0.5)
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(discovering || running || (!connections.hasMarketCheck && !connections.hasSerpAPI && !connections.hasApify))
-                    }
-                    .padding(.top, 4)
-                }
-
-                if !connections.hasSerpAPI && !connections.hasEBay && !connections.hasMarketCheck && !connections.hasApify {
-                    Text("Autopilot will still run keyless vehicle/safety/configuration APIs, but parts sourcing and web research will remain incomplete until a live search provider is connected.")
-                        .font(.caption)
-                        .foregroundStyle(BuildScoutTheme.warning)
                 }
             }
         }
@@ -167,31 +238,107 @@ struct AutopilotView: View {
 
     private func discoveryPanel(_ missionReport: MissionAutopilotReport) -> some View {
         ScoutPanel {
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(alignment: .leading, spacing: 16) {
                 HStack {
-                    ScoutEyebrow(text: "Mission discovery")
+                    VStack(alignment: .leading, spacing: 4) {
+                        ScoutEyebrow(text: "Fresh market run")
+                        Text("\(missionReport.rawLeadCount) RAW LEADS → \(missionReport.candidateCount) CANDIDATES → \(missionReport.finalists.count) A→Z FINALISTS")
+                            .font(.system(size: 13, weight: .black, design: .rounded))
+                            .tracking(0.3)
+                    }
+
                     Spacer()
-                    Text("\(missionReport.candidateCount) NORMALIZED CANDIDATES")
-                        .font(.system(size: 9, weight: .black, design: .rounded))
-                        .tracking(0.6)
-                        .foregroundStyle(BuildScoutTheme.accent)
+
+                    Text(missionReport.generatedAt.formatted(date: .omitted, time: .standard))
+                        .font(.caption2)
+                        .foregroundStyle(BuildScoutTheme.faint)
                 }
 
                 if missionReport.rankedCandidates.isEmpty {
-                    Text("The connected live providers did not return a candidate BuildScout could normalize and score for this mission.")
+                    Text("The connected live providers returned no candidate that survived the current mission filters. Change budget/tolerances, region, or provider coverage and run again.")
                         .font(.caption)
                         .foregroundStyle(BuildScoutTheme.warning)
                 } else {
-                    ForEach(Array(missionReport.rankedCandidates.prefix(6).enumerated()), id: \.element.id) { index, evaluation in
-                        HStack(spacing: 12) {
-                            ZStack {
-                                Circle()
-                                    .fill(index == 0 ? BuildScoutTheme.accent : BuildScoutTheme.raised)
-                                    .frame(width: 28, height: 28)
-                                Text("\(index + 1)")
-                                    .font(.system(size: 10, weight: .black, design: .rounded))
-                                    .foregroundStyle(index == 0 ? .black : .white)
+                    if !missionReport.finalists.isEmpty {
+                        VStack(alignment: .leading, spacing: 10) {
+                            ScoutEyebrow(text: "A → Z build paths")
+
+                            ForEach(Array(missionReport.finalists.enumerated()), id: \.element.id) { index, finalist in
+                                HStack(spacing: 12) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(index == 0 ? BuildScoutTheme.accent : BuildScoutTheme.raised)
+                                            .frame(width: 30, height: 30)
+                                        Image(systemName: index == 0 ? "crown.fill" : "\(index + 1).circle")
+                                            .font(.system(size: 11, weight: .black))
+                                            .foregroundStyle(index == 0 ? .black : .white)
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(finalist.listing.title)
+                                            .font(.system(size: 13, weight: .bold))
+                                            .lineLimit(1)
+                                        Text([
+                                            finalist.listing.source,
+                                            finalist.listing.location
+                                        ].filter { !$0.isEmpty }.joined(separator: " • "))
+                                            .font(.caption2)
+                                            .foregroundStyle(BuildScoutTheme.faint)
+                                            .lineLimit(1)
+                                    }
+
+                                    Spacer()
+
+                                    VStack(alignment: .trailing, spacing: 3) {
+                                        Text(finalist.sourcedPlan.minimumTotal.formatted(.currency(code: "CAD").precision(.fractionLength(0))))
+                                            .font(.system(size: 13, weight: .black, design: .rounded))
+                                            .foregroundStyle(index == 0 ? BuildScoutTheme.success : .white)
+                                        Text("\(finalist.sourcedPlan.requiredLivePriceCount)/\(finalist.sourcedPlan.requiredLineCount) required lines live")
+                                            .font(.caption2)
+                                            .foregroundStyle(BuildScoutTheme.faint)
+                                    }
+
+                                    Button {
+                                        store.addListing(finalist.listing)
+                                        selectedCandidateID = finalist.listing.id
+                                    } label: {
+                                        Image(systemName: "bookmark.fill")
+                                    }
+                                    .buttonStyle(.plain)
+                                    .help("Save candidate")
+
+                                    if let urlText = finalist.listing.url,
+                                       let url = URL(string: urlText) {
+                                        Link(destination: url) {
+                                            Image(systemName: "arrow.up.right.square")
+                                        }
+                                    }
+                                }
+
+                                if index < missionReport.finalists.count - 1 {
+                                    Divider().overlay(BuildScoutTheme.border)
+                                }
                             }
+                        }
+
+                        Divider().overlay(BuildScoutTheme.border)
+                    }
+
+                    HStack {
+                        ScoutEyebrow(text: "Candidate ranking")
+                        Spacer()
+                        Text("TOP 8 OF \(missionReport.rankedCandidates.count)")
+                            .font(.system(size: 8, weight: .black, design: .rounded))
+                            .tracking(0.7)
+                            .foregroundStyle(BuildScoutTheme.faint)
+                    }
+
+                    ForEach(Array(missionReport.rankedCandidates.prefix(8).enumerated()), id: \.element.id) { index, evaluation in
+                        HStack(spacing: 12) {
+                            Text("#\(index + 1)")
+                                .font(.system(size: 10, weight: .black, design: .rounded))
+                                .foregroundStyle(BuildScoutTheme.faint)
+                                .frame(width: 28, alignment: .leading)
 
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(evaluation.listing.title)
@@ -208,13 +355,10 @@ struct AutopilotView: View {
 
                             Spacer()
 
-                            VStack(alignment: .trailing, spacing: 3) {
-                                Text("\(evaluation.score)/100")
-                                    .font(.system(size: 12, weight: .black, design: .rounded))
-                                    .foregroundStyle(index == 0 ? BuildScoutTheme.success : BuildScoutTheme.muted)
-                                Text(evaluation.listing.price.formatted(.currency(code: "CAD").precision(.fractionLength(0))))
-                                    .font(.caption2.bold())
-                            }
+                            Text("\(evaluation.score)/100")
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                            Text(evaluation.listing.price.formatted(.currency(code: "CAD").precision(.fractionLength(0))))
+                                .font(.caption2.bold())
 
                             Button {
                                 store.addListing(evaluation.listing)
@@ -225,32 +369,16 @@ struct AutopilotView: View {
                             .buttonStyle(.plain)
                             .help("Save candidate")
                         }
-
-                        if index < min(missionReport.rankedCandidates.count, 6) - 1 {
-                            Divider().overlay(BuildScoutTheme.border)
-                        }
                     }
                 }
 
                 if let champion = missionReport.champion {
-                    HStack {
-                        Label(
-                            "Autopilot deep-dived #1: \(champion.listing.title)",
-                            systemImage: "crown.fill"
-                        )
-                        .font(.caption.bold())
-                        .foregroundStyle(BuildScoutTheme.success)
-
-                        Spacer()
-
-                        if let urlText = champion.listing.url,
-                           let url = URL(string: urlText) {
-                            Link(destination: url) {
-                                Label("OPEN LISTING", systemImage: "arrow.up.right.square")
-                                    .font(.system(size: 8, weight: .black, design: .rounded))
-                            }
-                        }
-                    }
+                    Label(
+                        "Best complete path after live sourcing: \(champion.listing.title)",
+                        systemImage: "crown.fill"
+                    )
+                    .font(.caption.bold())
+                    .foregroundStyle(BuildScoutTheme.success)
                 }
             }
         }
@@ -464,9 +592,9 @@ struct AutopilotView: View {
                     .font(.system(size: 34))
                     .foregroundStyle(BuildScoutTheme.accent)
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("Autopilot has not run yet.")
+                    Text("Ready for a fresh market run.")
                         .font(.headline)
-                    Text("Pick a candidate. BuildScout will execute the connected provider graph and assemble one end-to-end report.")
+                    Text("Set the mission above and press BUILD SCOUT NOW. Saved candidates are kept separate and never injected into live discovery.")
                         .font(.caption)
                         .foregroundStyle(BuildScoutTheme.muted)
                 }
@@ -490,9 +618,6 @@ struct AutopilotView: View {
             await MainActor.run {
                 missionReport = result
                 report = result.champion
-                if let champion = result.champion {
-                    selectedCandidateID = champion.listing.id
-                }
                 discovering = false
             }
         }
@@ -539,6 +664,56 @@ struct AutopilotView: View {
         Image(systemName: "chevron.right")
             .font(.caption2)
             .foregroundStyle(BuildScoutTheme.faint)
+    }
+
+    private func quickMoneyField(
+        _ label: String,
+        value: Binding<Double>
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(label)
+                .font(.system(size: 9, weight: .black, design: .rounded))
+                .tracking(0.7)
+                .foregroundStyle(BuildScoutTheme.faint)
+
+            HStack(spacing: 4) {
+                Text("$")
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundStyle(BuildScoutTheme.muted)
+                TextField(label, value: value, format: .number)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+            }
+            .padding(.horizontal, 9)
+            .frame(width: 120, height: 32)
+            .background(BuildScoutTheme.background, in: RoundedRectangle(cornerRadius: 8))
+            .overlay(RoundedRectangle(cornerRadius: 8).stroke(BuildScoutTheme.border))
+        }
+    }
+
+    private func missionToggle(
+        _ label: String,
+        icon: String,
+        value: Binding<Bool>
+    ) -> some View {
+        Button {
+            value.wrappedValue.toggle()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                Text(label)
+                    .font(.system(size: 9, weight: .black, design: .rounded))
+                    .tracking(0.4)
+            }
+            .foregroundStyle(value.wrappedValue ? .black : BuildScoutTheme.muted)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(
+                Capsule()
+                    .fill(value.wrappedValue ? BuildScoutTheme.accent : BuildScoutTheme.raised)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     private func status(_ title: String, _ on: Bool) -> some View {

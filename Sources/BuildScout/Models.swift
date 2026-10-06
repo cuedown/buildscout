@@ -63,15 +63,15 @@ struct VehicleListing: Identifiable, Codable, Hashable {
 }
 
 struct MissionProfile: Codable, Equatable {
-    var type: MissionType = .drift
-    var vehicleBudget: Double = 3000
-    var totalBudget: Double = 5000
-    var radiusKM: Double = 300
+    var type: MissionType = .custom
+    var vehicleBudget: Double = 5000
+    var totalBudget: Double = 10000
+    var radiusKM: Double = 250
     var allowNonRunner = true
     var allowTow = true
     var allowTransmissionSwap = true
-    var fabricationTolerance = 3
-    var preferredDrivetrain: Drivetrain = .rwd
+    var fabricationTolerance = 2
+    var preferredDrivetrain: Drivetrain = .unknown
 }
 
 struct BuildPart: Identifiable, Hashable {

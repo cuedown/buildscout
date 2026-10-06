@@ -101,14 +101,19 @@ struct HunterView: View {
                         .tracking(0.6)
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(isHunting || (!connections.hasSerpAPI && !connections.hasEBay))
+                    .disabled(
+                        isHunting ||
+                        (!connections.hasMarketCheck &&
+                         !connections.hasSerpAPI &&
+                         !connections.hasApify)
+                    )
                 }
 
                 HStack(spacing: 10) {
+                    providerPill("MARKETCHECK", on: connections.hasMarketCheck)
                     providerPill("SERPAPI", on: connections.hasSerpAPI)
-                    providerPill("EBAY API", on: connections.hasEBay)
-                    providerPill("AUCTION DOMAINS", on: connections.hasSerpAPI)
-                    providerPill("SHOPPING", on: connections.hasSerpAPI)
+                    providerPill("APIFY", on: connections.hasApify)
+                    providerPill("EBAY PARTS", on: connections.hasEBay)
 
                     Spacer()
 
@@ -117,9 +122,9 @@ struct HunterView: View {
                         .foregroundStyle(BuildScoutTheme.faint)
                 }
 
-                if !connections.hasSerpAPI && !connections.hasEBay {
+                if !connections.hasMarketCheck && !connections.hasSerpAPI && !connections.hasApify {
                     Label(
-                        "Add SerpApi or eBay credentials under Connections to enable live hunting. Keyless vehicle/safety APIs still work in Vehicle Intel.",
+                        "Connect MarketCheck, SerpApi, or an enabled Apify marketplace source under Connections to run live vehicle discovery.",
                         systemImage: "key.fill"
                     )
                     .font(.caption)
@@ -316,13 +321,17 @@ struct HunterView: View {
         let request = HuntRequest(
             mission: store.mission.type,
             keywords: HuntEngine.queries(
-                for: store.mission.type,
-                budget: store.mission.vehicleBudget,
+                for: store.mission,
                 location: connections.preferredRegion
             ),
             location: connections.preferredRegion,
             maxVehiclePrice: store.mission.vehicleBudget,
-            preferredVehicle: store.selectedEvaluation?.listing ?? store.evaluations.first?.listing
+            preferredVehicle: nil,
+            radiusKM: store.mission.radiusKM,
+            allowNonRunner: store.mission.allowNonRunner,
+            allowTow: store.mission.allowTow,
+            allowTransmissionSwap: store.mission.allowTransmissionSwap,
+            preferredDrivetrain: store.mission.preferredDrivetrain
         )
 
         Task {

@@ -82,12 +82,12 @@ enum HunterDirectory {
         case .drift:
             return [
                 "RWD manual project",
-                "BMW project needs work",
+                "RWD mechanic special",
                 "blown engine RWD",
                 "needs transmission RWD",
-                "350Z G35 project",
-                "Mustang manual project",
-                "E36 E46 E90 project",
+                "automatic RWD project",
+                "RWD roller shell",
+                "unfinished drift project",
                 "whole car not parting out",
                 "tow away project car",
                 "lost interest project"
@@ -113,7 +113,7 @@ enum HunterDirectory {
         case .rally:
             return [
                 "AWD manual project",
-                "Subaru project car",
+                "4WD manual project",
                 "old 4x4 hatchback",
                 "rally project",
                 "winter beater manual",
@@ -132,7 +132,7 @@ enum HunterDirectory {
                 "AWD winter beater",
                 "4x4 high mileage",
                 "needs work AWD",
-                "old Subaru manual",
+                "old AWD manual",
                 "fleet AWD"
             ]
         case .custom:
