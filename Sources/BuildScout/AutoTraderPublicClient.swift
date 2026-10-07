@@ -5,7 +5,8 @@ enum AutoTraderPublicClient {
     private static let batchSize = 5
 
     static func search(
-        request: HuntRequest
+        request: HuntRequest,
+        maxPages: Int = maximumPagesPerRun
     ) async -> [HuntResult] {
         guard let firstURL = searchURL(request: request, page: 1),
               let firstPage = try? await fetchPage(firstURL) else {
@@ -18,7 +19,7 @@ enum AutoTraderPublicClient {
         )
 
         let totalPages = max(1, firstPage.numberOfPages ?? 1)
-        let pagesToFetch = min(totalPages, maximumPagesPerRun)
+        let pagesToFetch = min(totalPages, max(1, min(maxPages, maximumPagesPerRun)))
 
         guard pagesToFetch > 1 else {
             return dedupe(results)
