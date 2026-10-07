@@ -107,6 +107,35 @@ enum HuntEngine {
             results.append(contentsOf: freeAuctions)
         }
 
+        // Rotate through the expanded source directory on each mission without
+        // pretending that website directories are native, complete inventory APIs.
+        // Deliberately bound search requests to avoid exhausting free quotas.
+        if connections.hasAnyWebSearch {
+            let sourceQueries = ExpandedMarketSources.targetQueries(
+                mission: request.mission,
+                budget: request.maxVehiclePrice
+            )
+            let page = Int(Date().timeIntervalSince1970 / (60 * 60 * 6))
+            let start = (page * 6) % sourceQueries.count
+            let picks = (0..<6).map { sourceQueries[(start + $0) % sourceQueries.count] }
+            var scoped = request
+            scoped.keywords = picks.map { $0.1 }
+            let expanded = await FreeWebDiscovery.search(
+                request: scoped,
+                connections: connections,
+                kind: .vehicle
+            )
+            results.append(contentsOf: expanded.map { item in
+                var copy = item
+                copy.provider = "Expanded index • " + copy.provider
+                // Search snippets are not canonical listings, title records or
+                // currency-confirmed prices. Keep them as inspection leads.
+                copy.price = nil
+                copy.currency = nil
+                return copy
+            })
+        }
+
         if connections.hasSerpAPI {
             let serpKey = connections.serpAPIKey
             let hasAlternateWeb = connections.hasTavily || connections.hasExa || connections.hasBrave
