@@ -337,7 +337,8 @@ struct HunterView: View {
             let filtered = results.filter { result in
                 // Foreign leads require dedicated import/FX verification
                 // before applying domestic project scoring.
-                if result.provider.contains("US aged vehicles") ||
+                if result.provider.contains("Expanded index") ||
+                   result.provider.contains("US aged vehicles") ||
                    result.provider.contains("US newer admissibility-check") ||
                    result.provider.contains("Canadian return /") { return true }
                 guard result.kind == .vehicle || result.kind == .auction else { return true }
