@@ -43,7 +43,8 @@ enum MissionAutopilotEngine {
         )
 
         let normalized = HuntNormalization.vehicles(
-            from: hunted.filter { !$0.provider.contains("US aged vehicles") &&
+            from: hunted.filter { !$0.provider.contains("Expanded index") &&
+                !$0.provider.contains("US aged vehicles") &&
                 !$0.provider.contains("US newer admissibility-check") &&
                 !$0.provider.contains("Canadian return /") },
             defaultLocation: connections.preferredRegion
