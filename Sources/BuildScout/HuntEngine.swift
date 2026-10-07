@@ -50,10 +50,16 @@ enum HuntEngine {
     ) async -> [HuntResult] {
         var results: [HuntResult] = []
 
-        let nativeAutoTrader = await AutoTraderPublicClient.search(
-            request: request
-        )
+        let nativeAutoTrader = await RegionalDiscovery.canadaWide(request: request)
         results.append(contentsOf: nativeAutoTrader)
+
+        // Separate American discovery lanes remain unpriced until VIN/title/FX
+        // and legal admissibility have been independently confirmed.
+        let usLeads = await RegionalDiscovery.usDiscovery(
+            request: request,
+            connections: connections
+        )
+        results.append(contentsOf: usLeads)
 
         if connections.hasMarketCheck {
             if let market = try? await MarketCheckClient.searchInventory(
